@@ -20,8 +20,8 @@ const { kicker, title, chapters, labels } = Astro.props;
       poster={withBase('/video/journey-poster.jpg')}
       aria-label={title}
     >
-      <source src={withBase('/video/journey.webm')} type="video/webm" />
       <source src={withBase('/video/journey.mp4')} type="video/mp4" />
+      <source src={withBase('/video/journey.webm')} type="video/webm" />
     </video>
     <div class="jf__shade" aria-hidden="true"></div>
 
@@ -70,6 +70,19 @@ const { kicker, title, chapters, labels } = Astro.props;
     const starts = steps.map((s) => +s.dataset.seek!);
     const toggle = root.querySelector<HTMLButtonElement>('[data-film-toggle]')!;
     const motionOff = () => document.documentElement.dataset.motion === 'off';
+    // If a codec fails to decode on this device, fall back to the next source instead of freezing on the poster.
+    const sources = [...video.querySelectorAll('source')];
+    let srcIdx = 0;
+    const fallback = () => {
+      if (++srcIdx >= sources.length) return root.classList.add('is-failed');
+      const t = video.currentTime;
+      sources.slice(0, srcIdx).forEach((el) => el.remove());
+      video.load();
+      video.currentTime = t;
+      video.play().catch(() => {});
+    };
+    video.addEventListener('error', fallback);
+    sources.forEach((el) => el.addEventListener('error', () => el === sources[srcIdx] && fallback()));
     let userPaused = false;
 
     const chapterAt = (t: number) => starts.reduce((acc, s, i) => (t >= s ? i : acc), 0);
@@ -190,11 +203,15 @@ const { kicker, title, chapters, labels } = Astro.props;
     border: 1px solid rgba(255, 255, 255, 0.1);
     opacity: 0;
     transform: translateY(16px);
-    transition: opacity 0.6s, transform 0.8s var(--ease-out);
+    visibility: hidden;
+    // outgoing caption leaves quickly; the next one enters after it, so they never overlap
+    transition: opacity 0.25s, transform 0.4s var(--ease-out), visibility 0s linear 0.25s;
     pointer-events: none;
     &:global(.is-on) {
       opacity: 1;
       transform: none;
+      visibility: visible;
+      transition: opacity 0.6s 0.3s, transform 0.8s var(--ease-out) 0.3s, visibility 0s linear 0.3s;
     }
     h3 {
       font-size: clamp(1.25rem, 2vw, 1.6rem);

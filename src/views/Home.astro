@@ -205,46 +205,67 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
     </div>
   </section>
 
-  <!-- ROYAL -->
-  <section class="section royal">
-    <div class="container section-head section-head--row">
-      <div>
-        <p class="kicker" data-reveal>{t.royalKicker}</p>
-        <h2 class="h2" data-reveal style="--d:1">{all.find((b, i) => b.t === 'h2' && i > storyIdx)?.text}</h2>
+  <!-- ROYAL PATRONAGE -->
+  <section class="section royal" aria-labelledby="royal-title">
+    <div class="container">
+      <div class="section-head section-head--row">
+        <div>
+          <p class="kicker" data-reveal>{t.royalKicker}</p>
+          <h2 class="h2" id="royal-title" data-reveal style="--d:1">{all.find((b, i) => b.t === 'h2' && i > storyIdx)?.text}</h2>
+        </div>
+        <a class="link-arrow" href={href(lang, 'news')} data-reveal>{t.allNews} <Icon name="arrow" size={16} /></a>
       </div>
-      <div class="royal__nav" data-reveal>
-        <button type="button" data-scroll="-1" aria-label="Previous">←</button>
-        <button type="button" data-scroll="1" aria-label="Next">→</button>
-      </div>
-    </div>
-    <div class="royal__rail" id="royal-rail">
-      {royal.map((n, i) => (
-        <a class="rcard" href={href(lang, `news/${n.id}`)} data-reveal style={`--d:${i % 4}`}>
-          <img src={n.image} alt="" loading="lazy" />
-          <div class="rcard__body">
-            <time>{fmtDate(lang, n.date)}</time>
-            <h3>{n.title}</h3>
+
+      <div class="royal__grid">
+        <aside class="royal__portrait" data-reveal>
+          <figure>
+            <img src={withBase('/media/2026/02/Her-Majesty-Queen-Rania-Al-Abdullah-600x750.jpg')} alt={lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'} loading="lazy" />
+            <span class="royal__badge"><Icon name="award" size={16} /> {lang === 'ar' ? 'مبادرة ملكية منذ 2006' : 'Royal initiative since 2006'}</span>
+          </figure>
+          <div class="royal__who">
+            <strong>{lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'}</strong>
+            <span>{lang === 'ar' ? 'مؤسِّسة صندوق الأمان لمستقبل الأيتام' : 'Founder, Al Aman Fund for the Future of Orphans'}</span>
           </div>
-        </a>
-      ))}
+          {quote && (
+            <blockquote class="royal__quote">
+              <Icon name="quote" size={28} />
+              <p>{quote.text}</p>
+              <a class="link-arrow" href={quote.href}>{t.readMore} <Icon name="arrow" size={16} /></a>
+            </blockquote>
+          )}
+        </aside>
+
+        <div class="royal__stage">
+          <div class="royal__feature" data-reveal>
+            {royal.map((n, i) => (
+              <a class:list={['royal__slide', { 'is-on': i === 0 }]} href={href(lang, `news/${n.id}`)} data-slide={i} tabindex={i === 0 ? 0 : -1} aria-hidden={i === 0 ? undefined : 'true'}>
+                <img src={n.image} alt="" loading={i === 0 ? 'eager' : 'lazy'} />
+                <span class="royal__slideBody">
+                  <time datetime={n.date}><Icon name="calendar" size={14} /> {fmtDate(lang, n.date)}</time>
+                  <strong>{n.title}</strong>
+                  {n.excerpt && <small>{n.excerpt}</small>}
+                  <span class="royal__go">{t.readMore} <Icon name="arrow" size={16} /></span>
+                </span>
+              </a>
+            ))}
+            <span class="royal__count" aria-hidden="true"><b data-royal-n>01</b> / {String(royal.length).padStart(2, '0')}</span>
+          </div>
+
+          <ol class="royal__list" role="list">
+            {royal.map((n, i) => (
+              <li>
+                <a class:list={['royal__row', { 'is-on': i === 0 }]} href={href(lang, `news/${n.id}`)} data-row={i}>
+                  <span class="royal__year">{n.date.slice(0, 4)}</span>
+                  <span class="royal__rowT">{n.title}</span>
+                  <img src={n.image} alt="" loading="lazy" />
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     </div>
   </section>
-
-  {quote && (
-    <section class="section quote">
-      <div class="container quote__in">
-        <span class="quote__mark" aria-hidden="true"><Icon name="quote" size={56} /></span>
-        <blockquote data-reveal>
-          <p>{quote.text}</p>
-          <footer>
-            <strong>{lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'}</strong>
-            <span>{lang === 'ar' ? 'مؤسِّسة صندوق الأمان' : 'Founder of Al Aman Fund'}</span>
-          </footer>
-        </blockquote>
-        <a class="link-arrow" href={quote.href} data-reveal>{t.readMore} <Icon name="arrow" size={16} /></a>
-      </div>
-    </section>
-  )}
 
   <!-- AWARDS -->
   <section class="section awards">
@@ -371,18 +392,38 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // Royal rail arrows
-  const rail = document.getElementById('royal-rail')!;
-  const rtl = document.dir === 'rtl';
-  document.querySelectorAll<HTMLButtonElement>('[data-scroll]').forEach((b) =>
-    b.addEventListener('click', () => rail.scrollBy({ left: +b.dataset.scroll! * (rtl ? -1 : 1) * rail.clientWidth * 0.8, behavior: 'smooth' })),
-  );
-  // drag-to-scroll
-  let down = false, sx = 0, sl = 0;
-  rail.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') return; down = true; sx = e.clientX; sl = rail.scrollLeft; rail.classList.add('is-drag'); });
-  addEventListener('pointerup', () => { down = false; rail.classList.remove('is-drag'); });
-  rail.addEventListener('pointermove', (e) => { if (down) rail.scrollLeft = sl - (e.clientX - sx); });
-  rail.addEventListener('click', (e) => { if (Math.abs(rail.scrollLeft - sl) > 5 && sl !== 0) e.preventDefault(); }, true);
+  // Royal patronage: hovering / focusing a row swaps the featured story; auto-advances while in view.
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-row]')];
+  const slides = [...document.querySelectorAll<HTMLElement>('[data-slide]')];
+  const counter = document.querySelector('[data-royal-n]');
+  let cur = 0;
+  const show = (i: number, sound = false) => {
+    if (i === cur) return;
+    cur = i;
+    slides.forEach((el, k) => {
+      const on = k === i;
+      el.classList.toggle('is-on', on);
+      el.tabIndex = on ? 0 : -1;
+      on ? el.removeAttribute('aria-hidden') : el.setAttribute('aria-hidden', 'true');
+    });
+    rows.forEach((el, k) => el.classList.toggle('is-on', k === i));
+    if (counter) counter.textContent = String(i + 1).padStart(2, '0');
+    if (sound) window.amanSound?.play('tick');
+  };
+  rows.forEach((row, i) => {
+    row.addEventListener('pointerenter', () => show(i, true));
+    row.addEventListener('focus', () => show(i));
+  });
+  let timer = 0;
+  const stage = document.querySelector('.royal__stage');
+  const auto = () => {
+    clearInterval(timer);
+    if (document.documentElement.dataset.motion === 'off') return;
+    timer = window.setInterval(() => show((cur + 1) % slides.length), 5500);
+  };
+  stage?.addEventListener('pointerenter', () => clearInterval(timer));
+  stage?.addEventListener('pointerleave', auto);
+  if (stage) new IntersectionObserver(([e]) => (e.isIntersecting ? auto() : clearInterval(timer))).observe(stage);
 </script>
 
 <style lang="scss">
@@ -921,85 +962,298 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
     }
   }
 
-  // ROYAL
-  .royal__nav {
-    display: flex;
-    gap: 8px;
-    button {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: 1.5px solid var(--line);
-      font-size: 1.2rem;
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
-      &:hover {
-        background: $teal-800;
-        color: #fff;
-        border-color: $teal-800;
-      }
-      :global([dir='rtl']) & {
-        transform: scaleX(-1);
-      }
+  // ROYAL PATRONAGE
+  .royal__grid {
+    display: grid;
+    grid-template-columns: 0.8fr 2fr;
+    gap: clamp(20px, 3vw, 40px);
+    align-items: start;
+    @include down($bp-lg) {
+      grid-template-columns: 1fr;
     }
   }
-  .royal__rail {
-    display: flex;
+  .royal__portrait {
+    position: sticky;
+    top: 110px;
+    display: grid;
     gap: 18px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding: 6px max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 24px;
-    scrollbar-width: none;
-    cursor: grab;
-    &::-webkit-scrollbar {
-      display: none;
+    @include down($bp-lg) {
+      position: static;
+      grid-template-columns: 200px 1fr;
+      align-items: center;
     }
-    &:global(.is-drag) {
-      cursor: grabbing;
-      scroll-snap-type: none;
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+    }
+    figure {
+      position: relative;
+      margin: 0;
+      aspect-ratio: 4 / 5;
+      border-radius: var(--radius-l);
+      overflow: hidden;
+      box-shadow: var(--shadow-lift);
+      @include down($bp-lg) {
+        grid-row: span 2;
+      }
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+      }
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(transparent 60%, rgba(0, 38, 43, 0.7));
+      }
     }
   }
-  .rcard {
-    flex: 0 0 clamp(280px, 34vw, 440px);
-    scroll-snap-align: start;
+  .royal__badge {
+    position: absolute;
+    z-index: 1;
+    inset-inline-start: 14px;
+    bottom: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: $sun-500;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .royal__who {
+    display: grid;
+    gap: 4px;
+    strong {
+      font: 500 1.25rem/1.25 var(--font-display);
+    }
+    span {
+      font-size: 0.88rem;
+      color: var(--text-2);
+    }
+  }
+  .royal__quote {
+    margin: 0;
+    display: grid;
+    gap: 12px;
+    justify-items: start;
+    padding: 22px;
+    border-radius: var(--radius);
+    background: var(--bg-2);
+    border-inline-start: 3px solid $sun-500;
+    :global(svg) {
+      color: $sun-500;
+    }
+    p {
+      font: 400 1.25rem/1.35 var(--font-display);
+    }
+  }
+
+  .royal__stage {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 18px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .royal__feature {
     position: relative;
-    aspect-ratio: 4 / 5;
+    min-height: 560px;
     border-radius: var(--radius-l);
     overflow: hidden;
+    background: $teal-900;
+    box-shadow: var(--shadow-lift);
+    @include down($bp-md) {
+      min-height: 460px;
+    }
+  }
+  .royal__slide {
+    position: absolute;
+    inset: 0;
     color: #fff;
-    user-select: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.7s var(--ease-out), visibility 0.7s;
+    isolation: isolate;
+    &:global(.is-on) {
+      opacity: 1;
+      visibility: visible;
+      img {
+        transform: scale(1);
+      }
+      .royal__slideBody > * {
+        opacity: 1;
+        transform: none;
+      }
+    }
     img {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 1.4s var(--ease-out);
-      pointer-events: none;
+      transform: scale(1.08);
+      transition: transform 6s var(--ease-out);
     }
-    &:hover img {
-      transform: scale(1.06);
-    }
-    &::after {
+    &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(transparent 40%, rgba(0, 38, 43, 0.92));
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(0, 38, 43, 0.1) 30%, rgba(0, 38, 43, 0.95));
+    }
+    &:focus-visible {
+      outline: 3px solid $sun-500;
+      outline-offset: -3px;
     }
   }
-  .rcard__body {
+  .royal__slideBody {
     position: absolute;
     inset: auto 0 0;
-    z-index: 1;
-    padding: 26px;
     display: grid;
-    gap: 8px;
+    gap: 12px;
+    padding: clamp(22px, 3vw, 36px);
+    > * {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.6s, transform 0.8s var(--ease-out);
+    }
+    > :nth-child(2) {
+      transition-delay: 0.08s;
+    }
+    > :nth-child(3) {
+      transition-delay: 0.16s;
+    }
+    > :nth-child(4) {
+      transition-delay: 0.24s;
+    }
     time {
-      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
       color: $sun-300;
-      font-weight: 600;
     }
-    h3 {
-      font-size: 1.3rem;
-      line-height: 1.25;
+    strong {
+      font: 500 clamp(1.4rem, 2.4vw, 2rem) / 1.2 var(--font-display);
     }
+    small {
+      font-size: 0.95rem;
+      opacity: 0.82;
+      line-height: 1.55;
+      @include clamp-lines(3);
+    }
+  }
+  .royal__go {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: start;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: $sun-500;
+    font-weight: 700;
+    font-size: 0.88rem;
+    :global([dir='rtl']) & :global(svg) {
+      transform: scaleX(-1);
+    }
+  }
+  .royal__count {
+    position: absolute;
+    top: 20px;
+    inset-inline-end: 20px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(0, 38, 43, 0.55);
+    backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    b {
+      color: #fff;
+    }
+  }
+
+  .royal__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .royal__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr 64px;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 12px 12px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.4s var(--ease-out), box-shadow 0.4s;
+    @include focus-ring;
+    &::before {
+      content: '';
+      position: absolute;
+      inset-block: 10px;
+      inset-inline-start: 0;
+      width: 3px;
+      border-radius: 3px;
+      background: $sun-500;
+      transform: scaleY(0);
+      transition: transform 0.4s var(--ease-out);
+    }
+    img {
+      width: 64px;
+      height: 52px;
+      border-radius: 10px;
+      object-fit: cover;
+      filter: saturate(0.7);
+      transition: filter 0.3s;
+    }
+    &:global(.is-on) {
+      border-color: $sun-500;
+      box-shadow: 0 16px 34px -20px rgba(246, 141, 46, 0.6);
+      transform: translateX(4px);
+      &::before {
+        transform: scaleY(1);
+      }
+      img {
+        filter: none;
+      }
+      .royal__year {
+        background: $sun-500;
+        color: #fff;
+      }
+    }
+    :global([dir='rtl']) &:global(.is-on) {
+      transform: translateX(-4px);
+    }
+  }
+  .royal__year {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--bg-2);
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.3s, color 0.3s;
+  }
+  .royal__rowT {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.35;
+    @include clamp-lines(2);
   }
 
   // NEWS
@@ -1063,40 +1317,6 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
   }
   .bento__it:global(.is-in) .bento__ringFill {
     stroke-dashoffset: calc(100 - var(--p));
-  }
-
-  // QUOTE
-  .quote__in {
-    position: relative;
-    display: grid;
-    gap: 26px;
-    justify-items: center;
-    text-align: center;
-    blockquote {
-      margin: 0;
-      display: grid;
-      gap: 26px;
-    }
-    p {
-      font: 400 clamp(1.8rem, 4vw, 3.4rem) / 1.2 var(--font-display);
-      max-width: 22ch;
-      margin-inline: auto;
-      text-wrap: balance;
-    }
-    footer {
-      display: grid;
-      gap: 4px;
-      strong {
-        color: var(--sun-600);
-      }
-      span {
-        color: var(--text-2);
-        font-size: 0.9rem;
-      }
-    }
-  }
-  .quote__mark {
-    color: $sun-500;
   }
 
   // AWARDS

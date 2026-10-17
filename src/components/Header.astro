@@ -1,35 +1,76 @@
 ---
 import Icon from './Icon.astro';
-import { withBase } from '../lib/base';
-import { ui, nav, href, altPath, type Lang } from '../lib/i18n';
 import Appearance from './Appearance.astro';
+import type { IconName } from '../lib/icons';
+import { withBase } from '../lib/base';
+import { ui, nav, href, altPath, data, type Lang } from '../lib/i18n';
 interface Props { lang: Lang; path: string }
 const { lang, path } = Astro.props;
 const t = ui[lang];
-const items = nav(lang);
-const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.startsWith(h + '/'));
+const ar = lang === 'ar';
+const all = nav(lang);
+const isActive = (h: string) => path === h || path.startsWith(h + '/');
+
+// Icons per destination, keyed by the end of the URL.
+const ICONS: Record<string, IconName> = {
+  'who-we-are': 'users', 'general-assembly': 'users', 'management-team': 'briefcase', 'our-programs': 'cap', 'reports-resources': 'file',
+  donate: 'heart', 'our-partners': 'handshake', 'individual-donation': 'gift', 'employee-deduction-program': 'clock', 'digital-donation': 'wallet',
+  'application-portal': 'cap', news: 'calendar', 'pursuing-excellence': 'award', 'al-aman-fund-charity-dinner': 'sparkle', 'contact-us': 'phone',
+};
+const iconFor = (h: string) => ICONS[h.split('/').filter(Boolean).pop() || ''] || 'arrow';
+
+// Fewer top-level items: the last three go under "More".
+const [who, give, apply, news, ...rest] = all;
+const more = { label: ar ? 'المزيد' : 'More', href: rest[0].href, children: rest };
+const primary = [who, give, apply, news, more];
+const promo = {
+  who: { title: data[lang].pages['who-we-are/our-programs']?.title, text: ui[lang].programsTitle, href: href(lang, 'who-we-are/our-programs'), img: withBase('/media/2026/05/graduates-.jpg') },
+  give: { title: t.donate, text: t.giveTitle, href: href(lang, 'ways-to-give/donate'), img: withBase('/media/2026/05/donate-.jpg') },
+};
 ---
 <header class="hdr" id="hdr">
   <div class="hdr__bar">
     <a class="hdr__logo" href={href(lang, '')} aria-label={t.orgName}>
-      <img src={withBase("/logo-white.png")} alt={t.orgName} width="600" height="237" />
+      <img src={withBase('/logo-white.png')} alt={t.orgName} width="600" height="237" />
     </a>
 
-    <nav class="hdr__nav" aria-label="Primary">
+    <nav class="hdr__nav" aria-label={ar ? 'القائمة الرئيسية' : 'Primary'}>
       <ul>
-        {items.map((it) => (
-          <li class:list={['hdr__item', { 'has-sub': it.children, 'is-active': isActive(it.href) }]}>
-            <a href={it.href} class="hdr__link">
-              {it.label}
-              {it.children && <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>}
-            </a>
+        {primary.map((it, idx) => (
+          <li class:list={['hdr__item', { 'has-sub': it.children, 'is-active': it.children ? it.children.some((c) => isActive(c.href)) : isActive(it.href) }]}>
+            {it.children ? (
+              <button type="button" class="hdr__link" aria-expanded="false" aria-haspopup="true">
+                {it.label}
+                <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+              </button>
+            ) : (
+              <a href={it.href} class="hdr__link" aria-current={isActive(it.href) ? 'page' : undefined}>{it.label}</a>
+            )}
             {it.children && (
-              <div class="hdr__sub">
-                <ul>
+              <div class:list={['hdr__mega', { 'hdr__mega--promo': idx < 2 }]}>
+                <ul class="hdr__tiles">
                   {it.children.map((c, i) => (
-                    <li style={`--i:${i}`}><a href={c.href}>{c.label}</a></li>
+                    <li style={`--i:${i}`}>
+                      <a href={c.href} class="hdr__tile" aria-current={isActive(c.href) ? 'page' : undefined}>
+                        <span class="hdr__tileIcon"><Icon name={iconFor(c.href)} size={18} /></span>
+                        <span>{c.label}</span>
+                      </a>
+                    </li>
                   ))}
                 </ul>
+                {idx < 2 && (() => {
+                  const p = idx === 0 ? promo.who : promo.give;
+                  return (
+                    <a class="hdr__promo" href={p.href}>
+                      <img src={p.img} alt="" loading="lazy" />
+                      <span class="hdr__promoBody">
+                        <strong>{p.title}</strong>
+                        <small>{p.text}</small>
+                        <i><Icon name="arrow" size={16} /></i>
+                      </span>
+                    </a>
+                  );
+                })()}
               </div>
             )}
           </li>
@@ -38,35 +79,44 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     </nav>
 
     <div class="hdr__actions">
-      <button class="hdr__icon" type="button" data-open-search aria-label={t.search}>
-        <Icon name="search" size={19} />
+      <button class="hdr__icon hdr__search" type="button" data-open-search aria-label={t.search}>
+        <Icon name="search" size={18} />
+        <span class="hdr__searchText">{t.search}</span>
         <kbd>⌘K</kbd>
       </button>
       <Appearance lang={lang} />
-      <a class="hdr__lang" href={altPath(lang, path)} hreflang={lang === 'en' ? 'ar' : 'en'} lang={lang === 'en' ? 'ar' : 'en'}><Icon name="globe" size={17} /> <span>{t.langSwitch}</span></a>
-      <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={17} /> {t.donate}</a>
-      <button class="hdr__burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span></button>
+      <span class="hdr__sep" aria-hidden="true"></span>
+      <a class="hdr__icon hdr__lang" href={altPath(lang, path)} hreflang={ar ? 'en' : 'ar'} lang={ar ? 'en' : 'ar'} aria-label={t.langSwitch}>
+        <Icon name="globe" size={18} /><span>{ar ? 'EN' : 'ع'}</span>
+      </a>
+      <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={17} /><span>{t.donate}</span></a>
+      <button class="hdr__burger" type="button" aria-label={ar ? 'القائمة' : 'Menu'} aria-expanded="false" aria-controls="mnav"><span></span><span></span><span></span></button>
     </div>
+    <span class="hdr__progress" aria-hidden="true"></span>
   </div>
 
   <div class="mnav" id="mnav" hidden>
     <div class="mnav__inner">
-      <ul>
-        {items.map((it, i) => (
+      <ul class="mnav__list">
+        {all.map((it, i) => (
           <li style={`--i:${i}`}>
-            <a href={it.href} class="mnav__top">{it.label}</a>
-            {it.children && (
-              <ul class="mnav__sub">
-                {it.children.slice(1).map((c) => <li><a href={c.href}>{c.label}</a></li>)}
-              </ul>
+            {it.children ? (
+              <details class="mnav__group">
+                <summary><span class="mnav__ico"><Icon name={iconFor(it.href)} size={20} /></span>{it.label}<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg></summary>
+                <ul>
+                  {it.children.map((c) => <li><a href={c.href}><Icon name={iconFor(c.href)} size={16} /> {c.label}</a></li>)}
+                </ul>
+              </details>
+            ) : (
+              <a href={it.href} class="mnav__top"><span class="mnav__ico"><Icon name={iconFor(it.href)} size={20} /></span>{it.label}</a>
             )}
           </li>
         ))}
       </ul>
-      <div class="mnav__modes" role="group" aria-label={lang === 'ar' ? 'الوضع' : 'Mode'}>
-        <button type="button" data-mode-pick="light" aria-pressed="false"><Icon name="sun" size={18} /> {lang === 'ar' ? 'فاتح' : 'Light'}</button>
-        <button type="button" data-mode-pick="dark" aria-pressed="false"><Icon name="moon" size={18} /> {lang === 'ar' ? 'داكن' : 'Dark'}</button>
-        <button type="button" data-mode-pick="system" aria-pressed="false"><Icon name="monitor" size={18} /> {lang === 'ar' ? 'النظام' : 'System'}</button>
+      <div class="mnav__modes" role="group" aria-label={ar ? 'الوضع' : 'Mode'}>
+        <button type="button" data-mode-pick="light" aria-pressed="false"><Icon name="sun" size={18} /> {ar ? 'فاتح' : 'Light'}</button>
+        <button type="button" data-mode-pick="dark" aria-pressed="false"><Icon name="moon" size={18} /> {ar ? 'داكن' : 'Dark'}</button>
+        <button type="button" data-mode-pick="system" aria-pressed="false"><Icon name="monitor" size={18} /> {ar ? 'النظام' : 'System'}</button>
       </div>
       <div class="mnav__foot">
         <a class="btn" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={18} /> {t.donate}</a>
@@ -79,20 +129,58 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
 
 <script>
   const hdr = document.getElementById('hdr')!;
+  const bar = hdr.querySelector<HTMLElement>('.hdr__progress')!;
   let last = 0;
   const onScroll = () => {
     const y = window.scrollY;
     hdr.classList.toggle('is-scrolled', y > 24);
-    hdr.classList.toggle('is-hidden', y > 400 && y > last && !hdr.classList.contains('menu-open'));
+    hdr.classList.toggle('is-hidden', y > 500 && y > last + 4 && !hdr.classList.contains('menu-open') && !hdr.querySelector('.hdr__item.is-open'));
+    if (y < last - 4) hdr.classList.remove('is-hidden');
     last = y;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
   };
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
+  // Mega menus: open on hover (pointer) or click/Enter (keyboard, touch); Escape closes.
+  const items = [...hdr.querySelectorAll<HTMLElement>('.hdr__item.has-sub')];
+  const setOpen = (li: HTMLElement, on: boolean) => {
+    li.classList.toggle('is-open', on);
+    li.querySelector('button')?.setAttribute('aria-expanded', String(on));
+  };
+  items.forEach((li) => {
+    const btn = li.querySelector('button')!;
+    let timer = 0;
+    li.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(timer);
+      items.forEach((o) => o !== li && setOpen(o, false));
+      setOpen(li, true);
+    });
+    li.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      timer = window.setTimeout(() => setOpen(li, false), 160);
+    });
+    btn.addEventListener('click', () => {
+      const on = !li.classList.contains('is-open');
+      items.forEach((o) => setOpen(o, false));
+      setOpen(li, on);
+      if (on) li.querySelector<HTMLElement>('.hdr__tile')?.focus();
+    });
+    li.addEventListener('focusout', (e) => !li.contains(e.relatedTarget as Node) && setOpen(li, false));
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setOpen(li, false);
+        btn.focus();
+      }
+    });
+  });
+  document.addEventListener('pointerdown', (e) => !(e.target as HTMLElement).closest('.hdr__item') && items.forEach((o) => setOpen(o, false)));
+
   const burger = hdr.querySelector<HTMLButtonElement>('.hdr__burger')!;
   const menu = document.getElementById('mnav')!;
-  burger.addEventListener('click', () => {
-    const open = burger.getAttribute('aria-expanded') !== 'true';
+  const toggleMenu = (open: boolean) => {
     burger.setAttribute('aria-expanded', String(open));
     hdr.classList.toggle('menu-open', open);
     if (open) menu.hidden = false;
@@ -100,7 +188,9 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     requestAnimationFrame(() => menu.classList.toggle('is-open', open));
     document.documentElement.classList.toggle('no-scroll', open);
     if (!open) setTimeout(() => (menu.hidden = true), 600);
-  });
+  };
+  burger.addEventListener('click', () => toggleMenu(burger.getAttribute('aria-expanded') !== 'true'));
+  menu.addEventListener('keydown', (e) => e.key === 'Escape' && (toggleMenu(false), burger.focus()));
 </script>
 
 <style lang="scss">
@@ -114,40 +204,71 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     padding: 14px var(--gutter);
     transition: transform 0.6s var(--ease-out), padding 0.5s var(--ease-out);
     &.is-hidden {
-      transform: translateY(-120%);
+      transform: translateY(-130%);
     }
     &.is-scrolled {
       padding-top: 10px;
     }
   }
   .hdr__bar {
-    @include glass(0.62);
-    max-width: var(--max);
+    position: relative;
+    max-width: calc(var(--max) + 40px);
     margin-inline: auto;
-    height: 64px;
-    border-radius: 999px;
+    height: 70px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding-inline: 22px 10px;
+    gap: 14px;
+    padding-inline: 24px 10px;
+    border-radius: 22px;
     color: #fff;
-    box-shadow: 0 20px 50px -20px rgba(0, 20, 24, 0.5);
-    transition: background 0.4s;
+    background: linear-gradient(180deg, rgba(0, 53, 60, 0.72), rgba(0, 38, 43, 0.72));
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px -24px rgba(0, 16, 20, 0.6);
+    transition: background 0.4s, height 0.5s var(--ease-out);
+    :global([dir='rtl']) & {
+      padding-inline: 24px 10px;
+    }
     .is-scrolled & {
-      background: rgba(0, 38, 43, 0.82);
+      height: 62px;
+      background: rgba(0, 32, 37, 0.9);
+    }
+  }
+  .hdr__progress {
+    position: absolute;
+    inset-inline: 22px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, $sun-300, $sun-500);
+    transform-origin: left;
+    transform: scaleX(0);
+    pointer-events: none;
+    :global([dir='rtl']) & {
+      transform-origin: right;
     }
   }
   .hdr__logo {
     flex: none;
     img {
-      height: 40px;
+      height: 46px;
       width: auto;
       max-width: none;
+      transition: height 0.5s var(--ease-out);
+      .is-scrolled & {
+        height: 40px;
+      }
     }
   }
+
+  // ---- nav
   .hdr__nav {
-    margin-inline: auto;
-    @include down(1160px) {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    @include down(1100px) {
       display: none;
     }
     > ul {
@@ -162,238 +283,417 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     position: relative;
   }
   .hdr__link {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    font-size: 0.86rem;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.92rem;
     font-weight: 600;
     white-space: nowrap;
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(255, 255, 255, 0.84);
     transition: color 0.3s, background 0.3s;
     @include focus-ring;
     .chev {
       width: 11px;
+      opacity: 0.7;
       transition: transform 0.4s var(--ease-out);
     }
-    .hdr__item:hover &,
-    .hdr__item:focus-within &,
-    .is-active > & {
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 14px;
+      bottom: 4px;
+      height: 2px;
+      border-radius: 2px;
+      background: $sun-500;
+      transform: scaleX(0);
+      transition: transform 0.4s var(--ease-out);
+    }
+    &:hover,
+    .is-open > & {
       color: #fff;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.07);
     }
-    .is-active > & {
-      color: var(--sun-300);
-    }
-    .hdr__item:hover & .chev {
+    .is-open > & .chev {
       transform: rotate(180deg);
     }
+    .is-active > & {
+      color: #fff;
+      &::after {
+        transform: scaleX(1);
+      }
+    }
   }
-  .hdr__sub {
+  .hdr__mega {
     position: absolute;
-    top: 100%;
-    inset-inline-start: -8px;
-    padding-top: 14px;
+    top: calc(100% + 14px);
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 22px;
+    background: rgba(0, 32, 37, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 40px 80px -24px rgba(0, 0, 0, 0.6);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(8px);
-    transition: opacity 0.35s, transform 0.5s var(--ease-out), visibility 0.35s;
-    .hdr__item:hover &,
-    .hdr__item:focus-within & {
+    transform: translateY(10px) scale(0.98);
+    transform-origin: top center;
+    transition: opacity 0.3s, transform 0.5s var(--ease-out), visibility 0.3s;
+    :global([dir='rtl']) & {
+      translate: 50% 0;
+    }
+    &::before {
+      // hover bridge so the menu doesn't close while the pointer crosses the gap
+      content: '';
+      position: absolute;
+      inset: -16px 0 auto;
+      height: 16px;
+    }
+    .is-open > & {
       opacity: 1;
       visibility: visible;
       transform: none;
     }
-    ul {
-      list-style: none;
-      margin: 0;
-      padding: 10px;
-      min-width: 260px;
-      border-radius: 20px;
-      background: rgba(0, 38, 43, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
-    }
+  }
+  .hdr__tiles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+    min-width: 270px;
     li {
       opacity: 0;
-      transform: translateX(-6px);
+      transform: translateY(6px);
       transition: opacity 0.4s, transform 0.5s var(--ease-out);
-      transition-delay: calc(var(--i) * 40ms);
-      .hdr__item:hover &,
-      .hdr__item:focus-within & {
+      transition-delay: calc(var(--i) * 35ms);
+      .is-open & {
         opacity: 1;
         transform: none;
       }
     }
-    a {
-      display: block;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.82);
-      transition: background 0.25s, color 0.25s, padding 0.35s var(--ease-out);
-      &:hover,
-      &:focus-visible {
-        background: rgba(246, 141, 46, 0.14);
+  }
+  .hdr__tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px 9px 9px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    transition: background 0.25s, color 0.25s;
+    @include focus-ring;
+    &:hover,
+    &:focus-visible,
+    &[aria-current='page'] {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      .hdr__tileIcon {
+        background: $sun-500;
         color: #fff;
-        padding-inline-start: 20px;
-        outline: none;
       }
     }
   }
+  .hdr__tileIcon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.07);
+    color: $sun-300;
+    transition: background 0.25s, color 0.25s;
+  }
+  .hdr__promo {
+    position: relative;
+    width: 230px;
+    border-radius: 16px;
+    overflow: hidden;
+    color: #fff;
+    isolation: isolate;
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      transition: transform 1.2s var(--ease-out);
+    }
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(transparent 20%, rgba(0, 38, 43, 0.95));
+    }
+    &:hover img {
+      transform: scale(1.06);
+    }
+  }
+  .hdr__promoBody {
+    position: absolute;
+    inset: auto 0 0;
+    display: grid;
+    gap: 4px;
+    padding: 16px;
+    strong {
+      font: 600 1.05rem/1.2 var(--font-display);
+    }
+    small {
+      font-size: 0.78rem;
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    i {
+      position: absolute;
+      top: -18px;
+      inset-inline-end: 14px;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: $sun-500;
+      :global([dir='rtl']) & {
+        transform: scaleX(-1);
+      }
+    }
+  }
+
+  // ---- actions
   .hdr__actions {
+    flex: none;
     display: flex;
     align-items: center;
-    gap: 6px;
-    @include down(1160px) {
+    gap: 4px;
+    @include down(1100px) {
       margin-inline-start: auto;
     }
   }
-  .hdr__icon {
-    display: flex;
+  .hdr__icon,
+  .hdr__actions :global(.hdr__icon) {
+    flex: none;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-width: 42px;
     height: 42px;
-    padding: 0 12px;
-    border-radius: 999px;
+    padding: 0 10px;
+    border-radius: 12px;
     color: rgba(255, 255, 255, 0.85);
-    transition: background 0.3s;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: background 0.3s, color 0.3s;
     @include focus-ring;
     &:hover {
       background: rgba(255, 255, 255, 0.1);
+      color: #fff;
     }
-    svg {
-      width: 19px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
+    :global(svg) {
+      flex: none;
+      width: 18px;
+      height: 18px;
     }
+  }
+  .hdr__search {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding-inline: 12px 8px;
     kbd {
-      font: 600 0.68rem/1 var(--font-body);
+      font: 700 0.68rem/1 var(--font-body);
       padding: 4px 6px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.1);
-      @include down(1480px) {
+    }
+    @include down(1380px) {
+      .hdr__searchText,
+      kbd {
         display: none;
       }
+      padding-inline: 10px;
     }
   }
-  .hdr__lang {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    border-radius: 999px;
+  .hdr__searchText {
     font-weight: 600;
-    font-size: 0.88rem;
-    color: rgba(255, 255, 255, 0.85);
-    @include focus-ring;
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    padding-inline-end: 18px;
+  }
+  .hdr__sep {
+    width: 1px;
+    height: 24px;
+    margin-inline: 4px;
+    background: rgba(255, 255, 255, 0.14);
+    @include down($bp-sm) {
+      display: none;
     }
+  }
+  .hdr__lang span {
+    font-size: 0.85rem;
   }
   .hdr__cta {
-    padding: 0.85em 1.4em;
+    flex: none;
+    margin-inline-start: 6px;
+    padding: 0.85em 1.3em;
     @include down($bp-sm) {
       display: none;
     }
   }
   .hdr__burger {
     display: none;
+    flex: none;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    margin-inline-start: 4px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.1);
     position: relative;
-    @include down(1160px) {
+    @include down(1100px) {
       display: block;
     }
     span {
       position: absolute;
-      left: 13px;
-      right: 13px;
+      inset-inline-start: 13px;
       height: 2px;
       border-radius: 2px;
       background: #fff;
-      transition: transform 0.5s var(--ease-out), top 0.5s var(--ease-out);
-      &:first-child {
-        top: 17px;
+      transition: transform 0.5s var(--ease-out), top 0.5s var(--ease-out), opacity 0.3s, width 0.4s var(--ease-out);
+      &:nth-child(1) {
+        top: 15px;
+        width: 18px;
       }
-      &:last-child {
-        top: 25px;
+      &:nth-child(2) {
+        top: 21px;
+        width: 12px;
+      }
+      &:nth-child(3) {
+        top: 27px;
+        width: 16px;
       }
     }
     &[aria-expanded='true'] span {
       top: 21px;
-      &:first-child {
+      width: 18px;
+      &:nth-child(1) {
         transform: rotate(45deg);
       }
-      &:last-child {
+      &:nth-child(2) {
+        opacity: 0;
+      }
+      &:nth-child(3) {
         transform: rotate(-45deg);
       }
     }
   }
 
+  // ---- mobile menu
   .mnav {
     position: fixed;
     inset: 0;
     z-index: -1;
     background: radial-gradient(120% 80% at 80% 0%, #004f59, #00262b 70%);
     color: #fff;
-    clip-path: circle(0% at calc(100% - 50px) 46px);
+    clip-path: circle(0% at calc(100% - 50px) 48px);
     transition: clip-path 0.8s cubic-bezier(0.76, 0, 0.24, 1);
     overflow-y: auto;
     &.is-open {
-      clip-path: circle(150% at calc(100% - 50px) 46px);
+      clip-path: circle(150% at calc(100% - 50px) 48px);
     }
     :global([dir='rtl']) & {
-      clip-path: circle(0% at 50px 46px);
+      clip-path: circle(0% at 50px 48px);
       &.is-open {
-        clip-path: circle(150% at 50px 46px);
+        clip-path: circle(150% at 50px 48px);
       }
     }
   }
   .mnav__inner {
-    padding: 120px var(--gutter) 40px;
-    > ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 18px;
-      > li {
-        opacity: 0;
-        transform: translateY(24px);
-        transition: opacity 0.6s, transform 0.8s var(--ease-out);
-        transition-delay: calc(0.2s + var(--i) * 60ms);
-        .is-open & {
-          opacity: 1;
-          transform: none;
-        }
+    padding: 112px var(--gutter) 40px;
+    max-width: 620px;
+  }
+  .mnav__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+    > li {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s, transform 0.8s var(--ease-out);
+      transition-delay: calc(0.18s + var(--i) * 50ms);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      .is-open & {
+        opacity: 1;
+        transform: none;
       }
     }
   }
-  .mnav__top {
-    font: 500 clamp(1.6rem, 6vw, 2.4rem) / 1.1 var(--font-display);
-  }
-  .mnav__sub {
-    list-style: none;
-    padding: 8px 0 0;
-    margin: 0;
+  .mnav__top,
+  .mnav__group summary {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    font: 500 clamp(1.25rem, 5vw, 1.6rem) / 1.2 var(--font-display);
+    cursor: pointer;
+    list-style: none;
+    &::-webkit-details-marker {
+      display: none;
+    }
+    .chev {
+      width: 14px;
+      margin-inline-start: auto;
+      transition: transform 0.4s var(--ease-out);
+    }
+  }
+  .mnav__group[open] summary .chev {
+    transform: rotate(180deg);
+  }
+  .mnav__ico {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: $sun-300;
+  }
+  .mnav__group ul {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0 0 0 54px;
+    display: grid;
+    gap: 2px;
+    :global([dir='rtl']) & {
+      padding: 0 54px 0 0;
+    }
     a {
-      color: rgba(255, 255, 255, 0.65);
-      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.98rem;
+      :global(svg) {
+        color: $sun-300;
+      }
+      &:hover {
+        color: #fff;
+      }
     }
   }
   .mnav__modes {
     display: inline-flex;
     gap: 4px;
-    margin-top: 36px;
+    margin-top: 28px;
     padding: 4px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
@@ -415,8 +715,8 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
   .mnav__foot {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 40px;
+    gap: 10px;
+    margin-top: 22px;
   }
   :global(html.no-scroll) {
     overflow: hidden;

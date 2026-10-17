@@ -1,13 +1,16 @@
 ---
 import Icon from './Icon.astro';
 import { withBase } from '../lib/base';
-import { ui, nav, href, data, policySlugs, socials, type Lang } from '../lib/i18n';
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+import { ui, nav, href, altPath, data, policySlugs, socials, type Lang } from '../lib/i18n';
+interface Props { lang: Lang; path?: string }
+const { lang, path = '/' } = Astro.props;
 const t = ui[lang];
+const ar = lang === 'ar';
 const items = nav(lang);
 const pages = data[lang].pages;
 const year = new Date().getFullYear();
+const stats = pages[''].sections.flat().filter((b) => b.t === 'stat');
+const pick = [1, 4, 0].map((i) => stats[i]).filter(Boolean);
 const icons: Record<string, string> = {
   Facebook: 'M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v8h4v-8H17l.5-4h-4V9c0-.6.4-1 1-1Z',
   Instagram: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm5.2-1.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z',
@@ -15,53 +18,83 @@ const icons: Record<string, string> = {
   LinkedIn: 'M5 9h3.5v11H5Zm1.8-5.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4ZM10.5 9h3.3v1.6c.5-.9 1.7-1.9 3.6-1.9 3.6 0 4.1 2.3 4.1 5.3V20H18v-5.3c0-1.3 0-2.9-1.8-2.9s-2.1 1.4-2.1 2.8V20h-3.6Z',
   YouTube: 'M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1c.4-1.2.4-3.8.4-3.8s0-2.6-.4-3.8ZM10 15V9l5.2 3Z',
 };
+const more = items.slice(2); // apply, news, excellence, dinner, contact
 ---
 <footer class="ftr">
-  <div class="ftr__cta container">
-    <p class="kicker">{t.giveKicker}</p>
-    <h2 class="ftr__big">{t.giveTitle}</h2>
-    <div class="ftr__ctaBtns">
-      <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate} <svg class="arrow" width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
-      <a class="btn btn--ghost" href={href(lang, 'ways-to-give')}>{pages['ways-to-give']?.title}</a>
-    </div>
-    <div class="ftr__sun" aria-hidden="true"></div>
-  </div>
-
-  <div class="ftr__grid container">
-    <div class="ftr__brand">
-      <img src={withBase("/logo-white.png")} alt={t.orgName} width="600" height="237" loading="lazy" />
-      <p>{t.footerTag}</p>
-      <ul class="ftr__social" aria-label={t.follow}>
-        {socials.map((s) => (
-          <li><a href={s.href} target="_blank" rel="noopener" aria-label={s.name}><svg viewBox="0 0 24 24"><path d={icons[s.name]} /></svg></a></li>
+  <div class="container">
+    <section class="ftr__cta" aria-labelledby="ftr-cta-title">
+      <div class="ftr__ctaArt" aria-hidden="true">
+        <span class="ftr__sun"></span>
+        <svg class="ftr__ribbon" viewBox="0 0 600 200" preserveAspectRatio="none"><path d="M0 150 C 120 90, 220 190, 340 140 S 520 80, 600 120 L600 200 L0 200 Z" /><path class="ftr__ribbonLine" d="M0 135 C 120 75, 220 175, 340 125 S 520 65, 600 105" /></svg>
+      </div>
+      <div class="ftr__ctaText">
+        <p class="kicker">{t.giveKicker}</p>
+        <h2 id="ftr-cta-title">{t.giveTitle}</h2>
+        <div class="ftr__ctaBtns">
+          <a class="btn" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={18} /> {t.donate}</a>
+          <a class="btn btn--ghost" href={href(lang, 'ways-to-give')}>{pages['ways-to-give']?.title} <Icon name="arrow" size={16} class="arrow" /></a>
+        </div>
+      </div>
+      <ul class="ftr__stats">
+        {pick.map((s) => (
+          <li><strong>{s.value}</strong><span>{s.text}</span></li>
         ))}
       </ul>
-    </div>
-    {items.slice(0, 2).map((g) => (
-      <div>
-        <h3>{g.label}</h3>
-        <ul>{g.children!.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+    </section>
+
+    <div class="ftr__grid">
+      <div class="ftr__brand">
+        <a href={href(lang, '')} aria-label={t.orgName}><img src={withBase('/logo-white.png')} alt={t.orgName} width="600" height="237" loading="lazy" /></a>
+        <p>{t.footerTag}</p>
+        <ul class="ftr__social" aria-label={t.follow}>
+          {socials.map((s) => (
+            <li><a href={s.href} target="_blank" rel="noopener" aria-label={s.name}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[s.name]} /></svg></a></li>
+          ))}
+        </ul>
       </div>
-    ))}
-    <div>
-      <h3>{t.policies}</h3>
-      <ul>{policySlugs.map((s) => <li><a href={href(lang, s)}>{pages[s]?.title}</a></li>)}</ul>
+
+      {items.slice(0, 2).map((g) => (
+        <nav class="ftr__col" aria-label={g.label}>
+          <h3>{g.label}</h3>
+          <ul>{g.children!.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+        </nav>
+      ))}
+      <nav class="ftr__col" aria-label={ar ? 'استكشف' : 'Explore'}>
+        <h3>{ar ? 'استكشف' : 'Explore'}</h3>
+        <ul>{more.map((c) => <li><a href={c.href}>{c.label}</a></li>)}</ul>
+      </nav>
+
+      <div class="ftr__col ftr__contact">
+        <h3>{t.contact}</h3>
+        <a class="ftr__line" href="tel:+96265330500"><span class="ftr__ico"><Icon name="phone" size={16} /></span><span dir="ltr">+962 6 5330500</span></a>
+        <a class="ftr__line" href="mailto:info@alamanfund.jo"><span class="ftr__ico"><Icon name="mail" size={16} /></span><span>info@alamanfund.jo</span></a>
+        <a class="ftr__line" href={href(lang, 'contact-us')}><span class="ftr__ico"><Icon name="pin" size={16} /></span><span>{ar ? 'عمان – دابوق – شارع محمد السعيد البطاينة، رقم 5' : 'Mohammed Al-Saeed Al-Bataineh St. 5, Amman'}</span></a>
+        <a class="ftr__line" href={href(lang, 'contact-us')}><span class="ftr__ico"><Icon name="gift" size={16} /></span><span>{ar ? 'بوث التبرعات الدائم — سيتي مول' : 'Donation booth — City Mall, P1'}</span></a>
+      </div>
     </div>
-    <div>
-      <h3>{t.contact}</h3>
-      <ul class="ftr__contact">
-        <li><Icon name="phone" size={16} /><a href="tel:+96265330500" dir="ltr">+962 6 5330500</a></li>
-        <li><Icon name="mail" size={16} /><a href="mailto:info@alamanfund.jo">info@alamanfund.jo</a></li>
-        <li><Icon name="pin" size={16} /><span>{lang === 'ar' ? 'شارع محمد السعيد البطاينة 5، عمّان' : 'Mohammed Al-Saeed Al-Bataineh Street 5, Amman'}</span></li>
-      </ul>
+
+    <div class="ftr__word" aria-hidden="true">{ar ? 'الأمان' : 'AL AMAN'}</div>
+
+    <div class="ftr__base">
+      <span>© {year} {t.orgName}</span>
+      <nav class="ftr__policies" aria-label={t.policies}>
+        {policySlugs.map((s) => <a href={href(lang, s)}>{pages[s]?.title}</a>)}
+      </nav>
+      <div class="ftr__baseEnd">
+        <a class="ftr__pill" href={altPath(lang, path)}><Icon name="globe" size={15} /> {t.langSwitch}</a>
+        <button class="ftr__pill ftr__top" type="button" data-top aria-label={ar ? 'العودة للأعلى' : 'Back to top'}><Icon name="arrow" size={15} /></button>
+      </div>
     </div>
-  </div>
-  <div class="ftr__base container">
-    <span>© {year} {t.orgName}. {t.rights}</span>
-    <span class="ftr__concept">{lang === "ar" ? "تصميم مقترح — الموقع الرسمي:" : "Redesign concept — official website:"} <a href="https://alamanfund.jo" target="_blank" rel="noopener">alamanfund.jo</a></span>
-    <a href={href(lang, 'application-portal')}>{t.apply} →</a>
+    <p class="ftr__concept">{ar ? 'تصميم مقترح — الموقع الرسمي:' : 'Redesign concept — official website:'} <a href="https://alamanfund.jo" target="_blank" rel="noopener">alamanfund.jo</a></p>
   </div>
 </footer>
+
+<script>
+  document.querySelector('[data-top]')?.addEventListener('click', () => {
+    window.amanSound?.play('whoosh');
+    scrollTo({ top: 0, behavior: document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
+  });
+</script>
 
 <style lang="scss">
   @use '../styles/mixins' as *;
@@ -69,113 +102,239 @@ const icons: Record<string, string> = {
 
   .ftr {
     position: relative;
-    margin-top: clamp(60px, 8vw, 120px);
+    margin-top: clamp(120px, 14vw, 180px);
     background: $teal-950;
-    color: rgba(255, 255, 255, 0.78);
+    color: rgba(255, 255, 255, 0.72);
     border-radius: var(--radius-l) var(--radius-l) 0 0;
-    overflow: hidden;
+    isolation: isolate;
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 420px;
+      z-index: -1;
+      border-radius: inherit;
+      background: radial-gradient(60% 100% at 80% 0%, rgba(11, 101, 112, 0.5), transparent 70%);
+    }
   }
+
+  // CTA card overlaps the top edge; the sun stays inside its own frame
   .ftr__cta {
     position: relative;
-    padding-block: clamp(70px, 10vw, 140px) clamp(50px, 7vw, 90px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    top: calc(-1 * clamp(50px, 6vw, 80px));
+    margin-bottom: calc(-1 * clamp(50px, 6vw, 80px) + 40px);
     display: grid;
-    gap: 26px;
+    grid-template-columns: 1.3fr 0.7fr;
+    gap: 30px;
+    align-items: end;
+    padding: clamp(30px, 5vw, 64px);
+    border-radius: var(--radius-l);
+    background: linear-gradient(135deg, $teal-700, $teal-900 65%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    isolation: isolate;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
   }
-  .ftr__big {
-    font-size: clamp(2rem, 5vw, 4.4rem);
-    color: #fff;
-    max-width: 16ch;
-    position: relative;
-    z-index: 1;
+  .ftr__ctaArt {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .ftr__sun {
+    position: absolute;
+    width: clamp(160px, 20vw, 280px);
+    aspect-ratio: 1;
+    inset-inline-end: 30%;
+    top: 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, $sun-300, $sun-500 55%, $sun-600);
+    box-shadow: 0 0 100px 20px rgba(246, 141, 46, 0.28);
+    opacity: 0.85;
+    animation: ftr-rise 10s ease-in-out infinite alternate;
+    @include down($bp-md) {
+      inset-inline-end: -10%;
+      opacity: 0.3;
+      top: 4%;
+    }
+  }
+  @keyframes ftr-rise {
+    to {
+      transform: translateY(-14px);
+    }
+  }
+  .ftr__ribbon {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: 45%;
+    path {
+      fill: rgba(0, 38, 43, 0.7);
+    }
+    .ftr__ribbonLine {
+      fill: none;
+      stroke: $sun-500;
+      stroke-width: 2;
+      opacity: 0.8;
+    }
+  }
+  .ftr__ctaText {
+    display: grid;
+    gap: 20px;
+    justify-items: start;
+    .kicker {
+      color: $sun-300;
+    }
+    h2 {
+      font-size: clamp(1.9rem, 3.6vw, 3.2rem);
+      color: #fff;
+      max-width: 17ch;
+    }
   }
   .ftr__ctaBtns {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    position: relative;
-    z-index: 1;
     color: #fff;
   }
-  .ftr__sun {
-    position: absolute;
-    inset-inline-end: -8vw;
-    bottom: -30vw;
-    width: 58vw;
-    max-width: 760px;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle at 40% 35%, $sun-300, $sun-500 50%, $sun-600 70%, transparent 71%);
-    opacity: 0.9;
-    filter: saturate(1.1);
-    box-shadow: 0 0 160px 40px rgba(246, 141, 46, 0.25);
-    animation: sunrise 12s ease-in-out infinite alternate;
-  }
-  @keyframes sunrise {
-    to {
-      transform: translateY(-4vw);
-    }
-  }
-  .ftr__grid {
+  .ftr__stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
-    grid-template-columns: 1.4fr repeat(4, 1fr);
-    gap: 40px;
-    padding-block: 70px 50px;
-    @include down($bp-lg) {
-      grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    li {
+      display: grid;
+      gap: 4px;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      background: rgba(0, 38, 43, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    strong {
+      font: 400 1.8rem/1 var(--font-display);
+      color: #fff;
+    }
+    span {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    @include down($bp-md) {
+      grid-template-columns: repeat(3, 1fr);
     }
     @include down($bp-sm) {
       grid-template-columns: 1fr;
     }
+  }
+
+  // links
+  .ftr__grid {
+    display: grid;
+    grid-template-columns: 1.3fr repeat(3, 1fr) 1.3fr;
+    gap: 36px;
+    padding-block: 10px 50px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(3, 1fr);
+      .ftr__brand {
+        grid-column: 1 / -1;
+      }
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr 1fr;
+      .ftr__contact {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+  .ftr__brand {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    img {
+      width: 180px;
+    }
+    p {
+      max-width: 32ch;
+      line-height: 1.6;
+    }
+  }
+  .ftr__col {
     h3 {
-      font: 700 0.78rem/1 var(--font-body);
+      font: 700 0.75rem/1 var(--font-body);
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: $sun-300;
       margin-bottom: 18px;
+      :global([dir='rtl']) & {
+        letter-spacing: 0;
+        font-size: 0.9rem;
+      }
     }
     ul {
       list-style: none;
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 10px;
-      font-size: 0.95rem;
+      gap: 11px;
     }
-    a:hover {
-      color: #fff;
-    }
-  }
-  .ftr__contact li {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    :global(.icon) {
-      flex: none;
-      margin-top: 4px;
-      color: $sun-300;
+    li a {
+      font-size: 0.94rem;
+      transition: color 0.25s, padding 0.35s var(--ease-out);
+      &:hover {
+        color: #fff;
+        padding-inline-start: 4px;
+      }
     }
   }
-  .ftr__brand {
+  .ftr__contact {
     display: grid;
-    gap: 20px;
+    gap: 12px;
     align-content: start;
-    img {
-      width: 170px;
+    h3 {
+      margin-bottom: 6px;
     }
-    p {
-      max-width: 34ch;
+  }
+  .ftr__line {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    &:hover {
+      color: #fff;
+      .ftr__ico {
+        background: $sun-500;
+        color: #fff;
+      }
     }
+  }
+  .ftr__ico {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    color: $sun-300;
+    transition: background 0.25s, color 0.25s;
   }
   .ftr__social {
-    display: flex !important;
-    gap: 8px !important;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 8px;
     a {
       display: grid;
       place-items: center;
       width: 40px;
       height: 40px;
-      border-radius: 50%;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.07);
       transition: background 0.3s, transform 0.4s var(--ease-out);
       &:hover {
@@ -188,15 +347,79 @@ const icons: Record<string, string> = {
       fill: #fff;
     }
   }
+
+  // giant outline wordmark
+  .ftr__word {
+    font: 700 clamp(4rem, 16vw, 14rem) / 0.85 var(--font-display);
+    letter-spacing: -0.04em;
+    text-align: center;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.12);
+    background: linear-gradient(180deg, rgba(246, 141, 46, 0.2), transparent 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+    :global([dir='rtl']) & {
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+  }
+
   .ftr__base {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 12px;
-    padding-block: 24px 30px;
+    align-items: center;
+    gap: 14px 24px;
+    padding-block: 22px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.5);
+  }
+  .ftr__policies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    a:hover {
+      color: #fff;
+    }
+  }
+  .ftr__baseEnd {
+    display: flex;
+    gap: 8px;
+    margin-inline-start: auto;
+  }
+  .ftr__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    &:hover {
+      background: #fff;
+      color: $teal-900;
+      border-color: #fff;
+    }
+  }
+  .ftr__top {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+    :global(svg) {
+      transform: rotate(-90deg);
+    }
+  }
+  .ftr__concept {
+    padding-bottom: 26px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
     a {
       color: $sun-300;
     }

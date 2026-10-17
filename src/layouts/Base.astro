@@ -72,7 +72,7 @@ const quick = [
     <main id="main">
       <slot />
     </main>
-    <Footer lang={lang} />
+    <Footer lang={lang} path={path} />
     <SearchPalette client:idle lang={lang} quick={quick} t={{ searchPlaceholder: t.searchPlaceholder, noResults: t.noResults, pages: t.pages, news: t.news, all: t.all, search: t.search }} />
     <ChatAssistant client:idle lang={lang} t={{ chatTitle: t.chatTitle, chatHello: t.chatHello, chatPlaceholder: t.chatPlaceholder, chatSuggestions: t.chatSuggestions, chatFallback: t.chatFallback, chatNone: t.chatNone }} />
 
