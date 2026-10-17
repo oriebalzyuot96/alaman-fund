@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js';
 import type { Lang } from './i18n';
+import { withBase } from './base';
 
 export type Doc = { lang: Lang; type: 'page' | 'news'; title: string; heading: string; url: string; text: string; date?: string; image?: string };
 
@@ -7,7 +8,7 @@ let docsPromise: Promise<Doc[]> | null = null;
 const fuses: Partial<Record<Lang, Fuse<Doc>>> = {};
 
 export function loadDocs() {
-  docsPromise ??= fetch('/search-index.json').then((r) => r.json());
+  docsPromise ??= fetch(withBase('/search-index.json')).then((r) => r.json());
   return docsPromise;
 }
 

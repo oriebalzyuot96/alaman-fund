@@ -1,5 +1,7 @@
 ---
+import { withBase } from '../lib/base';
 import { ui, nav, href, altPath, type Lang } from '../lib/i18n';
+import Appearance from './Appearance.astro';
 interface Props { lang: Lang; path: string }
 const { lang, path } = Astro.props;
 const t = ui[lang];
@@ -9,7 +11,7 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
 <header class="hdr" id="hdr">
   <div class="hdr__bar">
     <a class="hdr__logo" href={href(lang, '')} aria-label={t.orgName}>
-      <img src="/logo-white.png" alt={t.orgName} width="600" height="237" />
+      <img src={withBase("/logo-white.png")} alt={t.orgName} width="600" height="237" />
     </a>
 
     <nav class="hdr__nav" aria-label="Primary">
@@ -39,6 +41,7 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
         <kbd>⌘K</kbd>
       </button>
+      <Appearance lang={lang} />
       <a class="hdr__lang" href={altPath(lang, path)} hreflang={lang === 'en' ? 'ar' : 'en'} lang={lang === 'en' ? 'ar' : 'en'}>{t.langSwitch}</a>
       <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
       <button class="hdr__burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span></button>
@@ -126,9 +129,13 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
       background: rgba(0, 38, 43, 0.82);
     }
   }
-  .hdr__logo img {
-    height: 40px;
-    width: auto;
+  .hdr__logo {
+    flex: none;
+    img {
+      height: 40px;
+      width: auto;
+      max-width: none;
+    }
   }
   .hdr__nav {
     margin-inline: auto;
@@ -260,7 +267,7 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
       padding: 4px 6px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.1);
-      @include down($bp-sm) {
+      @include down(1480px) {
         display: none;
       }
     }

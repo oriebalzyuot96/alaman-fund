@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../lib/base';
 import Base from '../layouts/Base.astro';
 import HeroScene from '../islands/HeroScene';
 import Illo from '../components/Illo.astro';
@@ -93,8 +94,8 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
         <a class="link-arrow" href={href(lang, 'who-we-are')} data-reveal style="--d:3">{t.learnMore} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
       </div>
       <div class="story__collage">
-        <figure class="story__img story__img--a" data-reveal="clip" data-parallax="-0.06"><img src="/media/2026/05/graduates-.jpg" alt="" loading="lazy" /></figure>
-        <figure class="story__img story__img--b" data-reveal="clip" style="--d:2" data-parallax="0.08"><img src="/media/2026/05/vocational-training-1.jpg" alt="" loading="lazy" /></figure>
+        <figure class="story__img story__img--a" data-reveal="clip" data-parallax="-0.06"><img src={withBase("/media/2026/05/graduates-.jpg")} alt="" loading="lazy" /></figure>
+        <figure class="story__img story__img--b" data-reveal="clip" style="--d:2" data-parallax="0.08"><img src={withBase("/media/2026/05/vocational-training-1.jpg")} alt="" loading="lazy" /></figure>
         <div class="story__badge" data-reveal style="--d:3">
           <strong>2006</strong>
           <span>{lang === 'ar' ? 'مبادرة جلالة الملكة رانيا العبدالله' : 'A royal initiative by Her Majesty Queen Rania Al Abdullah'}</span>
@@ -183,7 +184,7 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
         <p class="lead" data-reveal style="--d:2">{firstSentence(awardText || "")}</p>
         <a class="link-arrow" href={href(lang, 'pursuing-excellence')} data-reveal style="--d:3">{D.pages['pursuing-excellence'].title} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
       </div>
-      <Video id="P4qWuysF2G8" title={t.filmTitle} label={t.watch} poster="/media/2026/05/The-Order-of-Al-Istiqlal-Independence-of-the-First-Degree.jpeg" />
+      <Video id="P4qWuysF2G8" title={t.filmTitle} label={t.watch} poster={withBase("/media/2026/05/The-Order-of-Al-Istiqlal-Independence-of-the-First-Degree.jpeg")} />
     </div>
   </section>
 

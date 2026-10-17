@@ -1,0 +1,554 @@
+---
+import type { Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const ar = lang === 'ar';
+const T = ar
+  ? {
+      title: 'المظهر وإمكانية الوصول', reset: 'إعادة الضبط', close: 'إغلاق', mode: 'الوضع', light: 'فاتح', dark: 'داكن', system: 'النظام',
+      skin: 'نمط الواجهة', soft: 'ناعم', sharp: 'حاد', skinHelp: 'يغيّر الشكل: الزوايا والحدود والظلال والخطوط.',
+      a11y: 'إمكانية الوصول', contrast: 'نظام التباين', none: 'قياسي', yb: 'أصفر على أسود', by: 'أسود على أصفر', gray: 'تدرّج رمادي',
+      size: 'حجم النص', smaller: 'تصغير النص', larger: 'تكبير النص', resetSize: 'افتراضي',
+      motion: 'الحركة', auto: 'النظام', on: 'تشغيل', off: 'إيقاف', motionHelp: 'الإيقاف يوقف الانتقالات وشاشة التحميل والمشهد ثلاثي الأبعاد.',
+      links: 'إبراز الروابط', linksHelp: 'وضع خط تحت كل الروابط', font: 'خط سهل القراءة', fontHelp: 'خط مصمم لوضوح الحروف',
+      spacing: 'تباعد النص', spacingHelp: 'مسافات أكبر بين الأسطر والكلمات', guide: 'دليل القراءة', guideHelp: 'شريط يتبع المؤشر لتركيز القراءة',
+      sound: 'أصوات الواجهة', soundHelp: 'أصوات قصيرة للنقرات مع تغيير مرئي دائماً',
+    }
+  : {
+      title: 'Appearance & accessibility', reset: 'Reset all', close: 'Close', mode: 'Mode', light: 'Light', dark: 'Dark', system: 'System',
+      skin: 'UI theme', soft: 'Soft', sharp: 'Sharp', skinHelp: 'Changes shape and type: corners, borders, shadows and headings.',
+      a11y: 'Accessibility', contrast: 'Contrast scheme', none: 'Standard', yb: 'Yellow on black', by: 'Black on yellow', gray: 'Grayscale',
+      size: 'Text size', smaller: 'Smaller text', larger: 'Larger text', resetSize: 'Reset',
+      motion: 'Animations', auto: 'System', on: 'On', off: 'Off', motionHelp: 'Off stops transitions, the loader and the 3D scene. System follows your device setting.',
+      links: 'Highlight links', linksHelp: 'Underline every link', font: 'Readable font', fontHelp: 'A typeface designed for legibility',
+      spacing: 'Text spacing', spacingHelp: 'More room between lines and words', guide: 'Reading guide', guideHelp: 'A band that follows your pointer',
+      sound: 'Interface sounds', soundHelp: 'Short sounds for clicks, always alongside a visible change',
+    };
+const switches = [
+  ['links', T.links, T.linksHelp],
+  ['font', T.font, T.fontHelp],
+  ['spacing', T.spacing, T.spacingHelp],
+  ['guide', T.guide, T.guideHelp],
+  ['sound', T.sound, T.soundHelp],
+] as const;
+---
+<div class="ap">
+  <button class="hdr__icon ap__mode" type="button" data-quick-mode aria-label={`${T.mode}: ${T.dark}`}>
+    <svg class="ap__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" /></svg>
+    <svg class="ap__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" /></svg>
+  </button>
+  <button class="hdr__icon" type="button" aria-expanded="false" aria-controls="appearance" data-ap-trigger aria-label={T.title}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></svg>
+  </button>
+
+  <section class="ap__panel" id="appearance" role="dialog" aria-modal="false" aria-labelledby="ap-title" hidden>
+    <header class="ap__head">
+      <h2 id="ap-title">{T.title}</h2>
+      <button type="button" class="ap__reset" data-ap-reset>{T.reset}</button>
+      <button type="button" class="ap__x" data-ap-close aria-label={T.close}>✕</button>
+    </header>
+
+    <fieldset>
+      <legend>{T.mode}</legend>
+      <div class="ap__choices ap__choices--3">
+        {[['light', T.light, '☀'], ['dark', T.dark, '☾'], ['system', T.system, '◐']].map(([v, l, i]) => (
+          <label class="ap__choice"><input type="radio" name="ap-mode" value={v} data-set="mode" /><span><b aria-hidden="true">{i}</b>{l}</span></label>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset aria-describedby="ap-skin-help">
+      <legend>{T.skin}</legend>
+      <div class="ap__choices ap__choices--2">
+        {[['soft', T.soft], ['sharp', T.sharp]].map(([v, l]) => (
+          <label class="ap__choice"><input type="radio" name="ap-skin" value={v} data-set="skin" /><span><i class:list={['ap__thumb', `ap__thumb--${v}`]} aria-hidden="true"></i>{l}</span></label>
+        ))}
+      </div>
+      <p class="ap__help" id="ap-skin-help">{T.skinHelp}</p>
+    </fieldset>
+
+    <h3 class="ap__sec">{T.a11y}</h3>
+
+    <fieldset>
+      <legend>{T.contrast}</legend>
+      <div class="ap__choices ap__choices--2">
+        {[['none', T.none], ['yellow-black', T.yb], ['black-yellow', T.by], ['gray', T.gray]].map(([v, l]) => (
+          <label class="ap__choice"><input type="radio" name="ap-contrast" value={v} data-set="contrast" /><span><i class:list={['ap__aa', `ap__aa--${v}`]} aria-hidden="true">Aa</i>{l}</span></label>
+        ))}
+      </div>
+    </fieldset>
+
+    <div class="ap__field">
+      <p class="ap__label" id="ap-size">{T.size}</p>
+      <div class="ap__size" role="group" aria-labelledby="ap-size">
+        <button type="button" data-font-step="-1"><span aria-hidden="true">A−</span><span class="sr-only">{T.smaller}</span></button>
+        <output data-font-value>100%</output>
+        <button type="button" data-font-step="1"><span aria-hidden="true">A+</span><span class="sr-only">{T.larger}</span></button>
+        <button type="button" class="ap__ghost" data-font-step="0">{T.resetSize}</button>
+      </div>
+    </div>
+
+    <fieldset aria-describedby="ap-motion-help">
+      <legend>{T.motion}</legend>
+      <div class="ap__choices ap__choices--3">
+        {[['auto', T.auto], ['on', T.on], ['off', T.off]].map(([v, l]) => (
+          <label class="ap__choice"><input type="radio" name="ap-motion" value={v} data-set="motion" /><span>{l}</span></label>
+        ))}
+      </div>
+      <p class="ap__help" id="ap-motion-help">{T.motionHelp}</p>
+    </fieldset>
+
+    <div class="ap__switches">
+      {switches.map(([k, l, h]) => (
+        <div class="ap__switch">
+          <span><label for={`ap-${k}`}>{l}</label><small id={`ap-${k}-help`}>{h}</small></span>
+          <input type="checkbox" role="switch" id={`ap-${k}`} data-set={k} aria-describedby={`ap-${k}-help`} />
+        </div>
+      ))}
+    </div>
+  </section>
+</div>
+
+<script>
+  type S = { mode: string; skin: string; contrast: string; motion: string; fontScale: number; links?: boolean; font?: boolean; spacing?: boolean; guide?: boolean; sound?: boolean };
+  const KEY = 'aman:settings';
+  const SCALES = [0.875, 1, 1.125, 1.25, 1.5];
+  const DEF: S = { mode: 'system', skin: 'soft', contrast: 'none', motion: 'auto', fontScale: 1 };
+  const root = document.documentElement;
+  const reducedQ = matchMedia('(prefers-reduced-motion: reduce)');
+  const darkQ = matchMedia('(prefers-color-scheme: dark)');
+
+  let s: S = { ...DEF };
+  try {
+    s = { ...DEF, ...(JSON.parse(localStorage.getItem(KEY) || '{}') || {}) };
+  } catch {}
+
+  const apply = () => {
+    if (s.mode === 'system') delete root.dataset.theme;
+    else root.dataset.theme = s.mode;
+    root.dataset.skin = s.skin;
+    root.dataset.a11yContrast = s.contrast;
+    root.dataset.motion = s.motion === 'auto' ? (reducedQ.matches ? 'off' : 'on') : s.motion;
+    root.style.setProperty('--fs', String(s.fontScale));
+    if (s.fontScale > 1) root.dataset.fsLarge = 'on';
+    else delete root.dataset.fsLarge;
+    for (const k of ['links', 'font', 'spacing', 'guide', 'sound'] as const) {
+      if (s[k]) root.dataset[k] = 'on';
+      else delete root.dataset[k];
+    }
+    if (s.font && !document.getElementById('ap-font')) {
+      const l = Object.assign(document.createElement('link'), { id: 'ap-font', rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap' });
+      document.head.appendChild(l);
+    }
+    guide(!!s.guide);
+    sync();
+    dispatchEvent(new CustomEvent('aman:settings', { detail: { ...s, motion: root.dataset.motion } }));
+  };
+  const save = () => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(s));
+    } catch {}
+  };
+  const isDark = () => root.dataset.theme === 'dark' || (!root.dataset.theme && darkQ.matches);
+
+  // reflect state into the controls
+  const sync = () => {
+    document.querySelectorAll<HTMLInputElement>('[data-set]').forEach((el) => {
+      const k = el.dataset.set as keyof S;
+      if (el.type === 'radio') el.checked = String(s[k]) === el.value;
+      else el.checked = !!s[k];
+    });
+    const out = document.querySelector('[data-font-value]');
+    if (out) out.textContent = `${Math.round(s.fontScale * 100)}%`;
+    const q = document.querySelector<HTMLElement>('[data-quick-mode]');
+    q?.classList.toggle('is-dark', isDark());
+  };
+
+  document.querySelectorAll<HTMLInputElement>('[data-set]').forEach((el) =>
+    el.addEventListener('change', () => {
+      const k = el.dataset.set as keyof S;
+      (s as any)[k] = el.type === 'radio' ? el.value : el.checked;
+      save();
+      apply();
+    }),
+  );
+  document.querySelectorAll<HTMLButtonElement>('[data-font-step]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const step = +b.dataset.fontStep!;
+      const i = SCALES.indexOf(s.fontScale);
+      s.fontScale = step === 0 ? 1 : SCALES[Math.min(Math.max((i < 0 ? 1 : i) + step, 0), SCALES.length - 1)];
+      save();
+      apply();
+    }),
+  );
+  document.querySelector('[data-ap-reset]')?.addEventListener('click', () => {
+    s = { ...DEF };
+    save();
+    apply();
+  });
+  document.querySelector('[data-quick-mode]')?.addEventListener('click', () => {
+    s.mode = isDark() ? 'light' : 'dark';
+    save();
+    apply();
+  });
+  darkQ.addEventListener('change', sync);
+  reducedQ.addEventListener('change', apply);
+
+  // popover open/close
+  const trigger = document.querySelector<HTMLButtonElement>('[data-ap-trigger]')!;
+  const panel = document.getElementById('appearance')!;
+  const open = (on: boolean) => {
+    panel.hidden = !on;
+    trigger.setAttribute('aria-expanded', String(on));
+    if (on) (panel.querySelector('input:checked') as HTMLElement | null)?.focus();
+    else trigger.focus();
+  };
+  trigger.addEventListener('click', () => open(panel.hidden));
+  document.querySelector('[data-ap-close]')?.addEventListener('click', () => open(false));
+  panel.addEventListener('keydown', (e) => e.key === 'Escape' && open(false));
+  document.addEventListener('pointerdown', (e) => {
+    if (!panel.hidden && !(e.target as HTMLElement).closest('.ap')) {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // reading guide
+  let bar: HTMLDivElement | null = null;
+  const move = (e: PointerEvent) => bar && (bar.style.top = `${e.clientY}px`);
+  function guide(on: boolean) {
+    if (on && !bar) {
+      bar = Object.assign(document.createElement('div'), { className: 'reading-guide' });
+      bar.setAttribute('aria-hidden', 'true');
+      bar.style.top = '50vh';
+      document.body.appendChild(bar);
+      addEventListener('pointermove', move);
+    } else if (!on && bar) {
+      bar.remove();
+      bar = null;
+      removeEventListener('pointermove', move);
+    }
+  }
+
+  // interface sounds: a soft blip on clicks, only when enabled
+  let ctx: AudioContext | null = null;
+  document.addEventListener('click', (e) => {
+    if (root.dataset.sound !== 'on' || !(e.target as HTMLElement).closest('a, button, label')) return;
+    try {
+      ctx ??= new AudioContext();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = 660;
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.09);
+      o.connect(g).connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.1);
+    } catch {}
+  });
+
+  apply();
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+
+  .ap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .ap__mode {
+    .ap__moon {
+      display: none;
+    }
+    &:global(.is-dark) {
+      .ap__sun {
+        display: block;
+      }
+      .ap__moon {
+        display: none;
+      }
+    }
+    &:not(:global(.is-dark)) {
+      .ap__sun {
+        display: none;
+      }
+      .ap__moon {
+        display: block;
+      }
+    }
+    @include down(640px) {
+      display: none;
+    }
+  }
+  .ap :global(.hdr__icon) svg {
+    width: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .ap__panel {
+    position: absolute;
+    top: calc(100% + 18px);
+    inset-inline-end: -60px;
+    z-index: 10;
+    width: min(400px, calc(100vw - 24px));
+    max-height: min(680px, calc(100dvh - 110px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 22px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 40px 90px -20px rgba(0, 20, 24, 0.55), 0 0 0 1px var(--line);
+    animation: ap-in 0.4s var(--ease-out);
+    @include down(640px) {
+      position: fixed;
+      top: 84px;
+      inset-inline: 12px;
+      width: auto;
+    }
+  }
+  .ap__panel[hidden] {
+    display: none;
+  }
+  @keyframes ap-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+  .ap__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    h2 {
+      font: 700 1.05rem/1.2 var(--font-body);
+      letter-spacing: 0;
+      margin-inline-end: auto;
+    }
+  }
+  .ap__reset,
+  .ap__ghost {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--sun-600);
+    &:hover {
+      background: var(--bg-2);
+    }
+  }
+  .ap__x {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    &:hover {
+      background: var(--bg-2);
+    }
+  }
+  fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: grid;
+    gap: 8px;
+  }
+  legend,
+  .ap__label {
+    padding: 0;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-2);
+  }
+  .ap__sec {
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font: 700 1rem/1 var(--font-body);
+    letter-spacing: 0;
+  }
+  .ap__choices {
+    display: grid;
+    gap: 8px;
+  }
+  .ap__choices--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ap__choices--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .ap__choice {
+    position: relative;
+    cursor: pointer;
+    input {
+      position: absolute;
+      opacity: 0;
+    }
+    > span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1.5px solid var(--line);
+      font-size: 0.86rem;
+      font-weight: 600;
+      transition: border-color 0.2s, background 0.2s;
+      b {
+        font-weight: 400;
+        color: var(--sun-600);
+      }
+    }
+    input:checked + span {
+      border-color: var(--sun-500);
+      background: rgba(246, 141, 46, 0.1);
+    }
+    input:focus-visible + span {
+      outline: 2px solid var(--sun-500);
+      outline-offset: 2px;
+    }
+  }
+  .ap__thumb {
+    flex: none;
+    width: 34px;
+    height: 26px;
+    background: var(--bg-2);
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 6px 10px 6px 6px;
+      background: var(--teal-800);
+    }
+  }
+  .ap__thumb--soft {
+    border-radius: 9px;
+    &::before {
+      border-radius: 5px;
+    }
+  }
+  .ap__thumb--sharp {
+    border-radius: 1px;
+    &::before {
+      border-radius: 0;
+      box-shadow: 2px 2px 0 var(--sun-500);
+    }
+  }
+  .ap__aa {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font: 700 13px/1 var(--font-body);
+    font-style: normal;
+    box-shadow: inset 0 0 0 1px var(--line);
+    forced-color-adjust: none;
+  }
+  .ap__aa--none {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .ap__aa--yellow-black {
+    background: #000 !important;
+    color: #ff0 !important;
+  }
+  .ap__aa--black-yellow {
+    background: #ff0 !important;
+    color: #000 !important;
+  }
+  .ap__aa--gray {
+    background: linear-gradient(135deg, #fff 50%, #777 50%);
+    color: #000;
+  }
+  .ap__help {
+    font-size: 0.78rem;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+  .ap__size {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    button:not(.ap__ghost) {
+      min-width: 44px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1.5px solid var(--line);
+      font-weight: 800;
+      &:hover {
+        border-color: var(--sun-500);
+      }
+    }
+    output {
+      min-width: 4.5ch;
+      text-align: center;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+  .ap__switches {
+    display: grid;
+    gap: 4px;
+  }
+  .ap__switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    > span {
+      display: grid;
+      gap: 2px;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    small {
+      font-size: 0.76rem;
+      color: var(--text-2);
+    }
+    input {
+      appearance: none;
+      flex: none;
+      width: 44px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--line);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.25s;
+      &::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        inset-inline-start: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        transition: inset-inline-start 0.25s var(--ease-out);
+      }
+      &:checked {
+        background: var(--sun-500);
+        &::after {
+          inset-inline-start: 21px;
+        }
+      }
+      &:focus-visible {
+        outline: 2px solid var(--sun-500);
+        outline-offset: 2px;
+      }
+    }
+  }
+</style>

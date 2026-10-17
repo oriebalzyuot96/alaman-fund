@@ -214,10 +214,11 @@ export default function HeroScene({ rtl = false }: { rtl?: boolean }) {
   const intro = useRef(0);
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
+  const [still, setStill] = useState(() => document.documentElement.dataset.motion === 'off');
 
   useEffect(() => {
     // Sun rises once the loader has lifted.
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = document.documentElement.dataset.motion === 'off';
     const start = () => {
       const t0 = performance.now();
       const dur = reduce ? 1 : 2600;
@@ -231,15 +232,24 @@ export default function HeroScene({ rtl = false }: { rtl?: boolean }) {
     if ((window as any).__amanLoaded) start();
     else addEventListener('loader:done', start, { once: true });
 
+    const onSettings = () => {
+      const off = document.documentElement.dataset.motion === 'off';
+      if (off) intro.current = 1;
+      setStill(off);
+    };
+    addEventListener('aman:settings', onSettings);
     const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting));
     if (wrap.current) io.observe(wrap.current);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      removeEventListener('aman:settings', onSettings);
+    };
   }, []);
 
   return (
     <div ref={wrap} style={{ position: 'absolute', inset: 0 }}>
       <Canvas
-        frameloop={visible ? 'always' : 'never'}
+        frameloop={!visible ? 'never' : still ? 'demand' : 'always'}
         dpr={[1, 1.75]}
         camera={{ position: [0, 0, 8], fov: 42 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { matchIntent, type Answer } from '../lib/chat-kb';
 import { searcher, snippet } from '../lib/search';
 import type { Lang } from '../lib/i18n';
+import { withBase } from '../lib/base';
 import './chat.scss';
 
 type Msg = { from: 'bot' | 'me'; text: string; links?: Answer['links']; cards?: { title: string; url: string; text: string }[] };
@@ -88,7 +89,7 @@ export default function ChatAssistant({ lang, t }: Props) {
 
       <section className="chat__win" aria-label={t.chatTitle} aria-hidden={!open}>
         <header className="chat__head">
-          <img src="/logo-mark.png" alt="" width="40" height="40" />
+          <img src={withBase('/logo-mark.png')} alt="" width="40" height="40" />
           <div>
             <strong>{t.chatTitle}</strong>
             <span><i /> {lang === 'ar' ? 'متصل الآن' : 'Online now'}</span>
@@ -115,7 +116,7 @@ export default function ChatAssistant({ lang, t }: Props) {
               {m.links && (
                 <div className="chat__links">
                   {m.links.map((l) => (
-                    <a key={l.href} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
+                    <a key={l.href} href={withBase(l.href)} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
                       {l.label} →
                     </a>
                   ))}

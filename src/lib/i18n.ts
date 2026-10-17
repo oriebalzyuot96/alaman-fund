@@ -1,4 +1,5 @@
 import content from '../data/content.json';
+import { withBase, stripBase } from './base';
 
 export type Lang = 'en' | 'ar';
 export type Block = { t: string; text?: string; sub?: string; value?: string; src?: string; alt?: string; href?: string; poster?: string; rows?: string[][] };
@@ -9,8 +10,8 @@ export const data = content as unknown as Record<Lang, { pages: Record<string, P
 
 export const href = (lang: Lang, path: string) => {
   const clean = path.replace(/^\/+|\/+$/g, '');
-  if (lang === 'ar') return clean ? `/ar/${clean}` : '/ar';
-  return clean ? `/${clean}` : '/';
+  if (lang === 'ar') return withBase(clean ? `/ar/${clean}` : '/ar');
+  return withBase(clean ? `/${clean}` : '/');
 };
 
 export const ui = {
@@ -167,7 +168,7 @@ export const fmtDate = (lang: Lang, d: string) =>
 
 /** The other-language URL for the language switcher. */
 export function altPath(lang: Lang, path: string) {
-  const p = path.replace(/^\/ar(\/|$)/, '/').replace(/\/$/, '') || '/';
+  const p = stripBase(path).replace(/^\/ar(\/|$)/, '/').replace(/\/$/, '') || '/';
   if (/^\/news\/\d+$/.test(p)) return lang === 'en' ? '/ar/news' : '/news'; // post ids differ per language
   return lang === 'en' ? href('ar', p) : href('en', p);
 }

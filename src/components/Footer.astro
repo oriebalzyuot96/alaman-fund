@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../lib/base';
 import { ui, nav, href, data, policySlugs, socials, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -27,7 +28,7 @@ const icons: Record<string, string> = {
 
   <div class="ftr__grid container">
     <div class="ftr__brand">
-      <img src="/logo-white.png" alt={t.orgName} width="600" height="237" loading="lazy" />
+      <img src={withBase("/logo-white.png")} alt={t.orgName} width="600" height="237" loading="lazy" />
       <p>{t.footerTag}</p>
       <ul class="ftr__social" aria-label={t.follow}>
         {socials.map((s) => (

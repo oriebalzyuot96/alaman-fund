@@ -1,4 +1,5 @@
 ---
+import { withBase } from '../lib/base';
 import Base from '../layouts/Base.astro';
 import PageHero from '../components/PageHero.astro';
 import Illo from '../components/Illo.astro';
@@ -20,7 +21,7 @@ const elig = eligS.filter((b) => b.t === 'p').map((b) => b.text!);
 const people = data[lang].pages['who-we-are/management-team'].sections.flat().filter((b) => b.t === 'h5' && b.sub).slice(0, 6);
 ---
 <Base lang={lang} title={page.title} description={story[0]}>
-  <PageHero lang={lang} title={page.title} kicker={lang === 'ar' ? 'قصتنا' : 'Our story'} lead={story[0]} image="/media/2026/05/graduates-.jpg" />
+  <PageHero lang={lang} title={page.title} kicker={lang === 'ar' ? 'قصتنا' : 'Our story'} lead={story[0]} image={withBase("/media/2026/05/graduates-.jpg")} />
 
   <section class="section wwa">
     <div class="container wwa__grid">

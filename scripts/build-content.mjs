@@ -104,10 +104,14 @@ for (const lang of ['en', 'ar']) {
   }
 }
 
+// Prefix root-relative URLs with the deploy base path (e.g. BASE_PATH=/alaman-fund on GitHub Pages).
+const BASE = (process.env.BASE_PATH || '').replace(/\/$/, '');
+const based = (k, v) => (BASE && ['src', 'href', 'image', 'poster', 'url'].includes(k) && typeof v === 'string' && v.startsWith('/') && !v.startsWith('//') ? BASE + v : v);
+
 fs.mkdirSync('src/data', { recursive: true });
-fs.writeFileSync('src/data/content.json', JSON.stringify(out));
+fs.writeFileSync('src/data/content.json', JSON.stringify(out, based));
 fs.mkdirSync('public', { recursive: true });
-fs.writeFileSync('public/search-index.json', JSON.stringify(index));
+fs.writeFileSync('public/search-index.json', JSON.stringify(index, based));
 console.log(
   'en pages', Object.keys(out.en.pages).length, 'news', out.en.news.length,
   '| ar pages', Object.keys(out.ar.pages).length, 'news', out.ar.news.length,

@@ -40,7 +40,7 @@ const t = ui[lang];
     if (!el) return;
     var seen = false;
     try { seen = sessionStorage.getItem('aman-loaded') === '1'; } catch (e) {}
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce = root.dataset.motion === 'off';
     var minTime = seen || reduce ? 350 : 2100;
     var start = performance.now();
     var target = 0, shown = 0, done = false;

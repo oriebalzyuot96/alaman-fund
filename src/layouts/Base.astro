@@ -1,4 +1,5 @@
 ---
+import { withBase, stripBase } from '../lib/base';
 import '../styles/global.scss';
 import Loader from '../components/Loader.astro';
 import Header from '../components/Header.astro';
@@ -11,7 +12,8 @@ interface Props { lang: Lang; title: string; description?: string; image?: strin
 const { lang, title, description, image, scene = false } = Astro.props;
 const t = ui[lang];
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const fullTitle = path === '/' || path === '/ar' ? t.orgName : `${title} — ${t.orgShort}`;
+const bare = stripBase(path).replace(/\/$/, '') || '/';
+const fullTitle = bare === '/' || bare === '/ar' ? t.orgName : `${title} — ${t.orgShort}`;
 const desc = description || (lang === 'ar'
   ? 'صندوق الأمان لمستقبل الأيتام: مبادرة ملكية تأسست عام 2006 لدعم الشباب الأيتام بعد سن 18 بالتعليم والدعم المعيشي والتمكين.'
   : 'Al Aman Fund for the Future of Orphans — established in 2006 by Her Majesty Queen Rania Al Abdullah to support orphaned youth after the age of 18.');
@@ -33,7 +35,22 @@ const quick = [
     <meta name="theme-color" content="#00353c" />
     <!-- Redesign concept: keep it out of search results so it is never mistaken for the official site. -->
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="icon" href="/favicon.png" />
+    <link rel="icon" href={withBase("/favicon.png")} />
+    <script is:inline>
+      // Pre-paint: apply saved appearance + accessibility settings before first render (no theme flash).
+      (function () {
+        var d = document.documentElement, s = {};
+        try { s = JSON.parse(localStorage.getItem('aman:settings') || '{}') || {}; } catch (e) {}
+        if (s.mode === 'light' || s.mode === 'dark') d.dataset.theme = s.mode;
+        d.dataset.skin = s.skin || 'soft';
+        d.dataset.a11yContrast = s.contrast || 'none';
+        var m = s.motion || 'auto';
+        d.dataset.motion = m === 'auto' ? (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on') : m;
+        if (s.fontScale) d.style.setProperty('--fs', s.fontScale);
+        if (s.fontScale > 1) d.dataset.fsLarge = 'on';
+        ['links', 'font', 'spacing', 'guide', 'sound'].forEach(function (k) { if (s[k]) d.dataset[k] = 'on'; });
+      })();
+    </script>
     <link rel="alternate" hreflang={lang === 'en' ? 'ar' : 'en'} href={altPath(lang, path)} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={desc} />
@@ -61,28 +78,44 @@ const quick = [
     <script>
       import Lenis from 'lenis';
 
-      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!reduce) {
-        const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 0.95 });
-        const raf = (t: number) => {
-          lenis.raf(t);
-          requestAnimationFrame(raf);
-        };
+      const motionOff = () => document.documentElement.dataset.motion === 'off';
+      const reduce = motionOff();
+      // Smooth scroll only while animations are on; the Appearance panel can toggle it live.
+      let lenis: Lenis | null = null;
+      const raf = (t: number) => {
+        if (!lenis) return;
+        lenis.raf(t);
         requestAnimationFrame(raf);
-        const sync = () => (document.documentElement.classList.contains('no-scroll') || document.body.classList.contains('is-loading') ? lenis.stop() : lenis.start());
-        new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      };
+      const sync = () => {
+        if (!lenis) return;
+        document.documentElement.classList.contains('no-scroll') || document.body.classList.contains('is-loading') ? lenis.stop() : lenis.start();
+      };
+      const startLenis = () => {
+        if (lenis || motionOff()) return;
+        lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 0.95 });
+        requestAnimationFrame(raf);
         sync();
-        document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) =>
-          a.addEventListener('click', (e) => {
-            const el = document.querySelector(a.getAttribute('href')!);
-            if (el) {
-              e.preventDefault();
-              lenis.scrollTo(el as HTMLElement, { offset: -90 });
-            }
-          }),
-        );
-      }
+      };
+      new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      startLenis();
+      addEventListener('aman:settings', () => {
+        if (motionOff()) {
+          lenis?.destroy();
+          lenis = null;
+          document.querySelectorAll('[data-reveal], [data-intro]').forEach((el) => el.classList.add('is-in'));
+        } else startLenis();
+      });
+      document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) =>
+        a.addEventListener('click', (e) => {
+          const el = document.querySelector(a.getAttribute('href')!);
+          if (el && lenis) {
+            e.preventDefault();
+            lenis.scrollTo(el as HTMLElement, { offset: -90 });
+          }
+        }),
+      );
 
       // Reveal-on-scroll, started after the loader lifts so the first view animates in.
       const io = new IntersectionObserver(

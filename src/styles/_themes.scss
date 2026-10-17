@@ -1,0 +1,198 @@
+// Appearance + accessibility settings, applied as data-attributes on <html> by the pre-paint
+// script in Base.astro (same model as the Diwan theme's settings).
+@use 'tokens' as *;
+
+html {
+  font-size: calc(100% * var(--fs, 1));
+}
+
+// Large text: the full navigation no longer fits, so fall back to the menu button.
+:root[data-fs-large] {
+  .hdr__nav,
+  .hdr__lang,
+  .ap__mode {
+    display: none !important;
+  }
+  .hdr__actions {
+    margin-inline-start: auto;
+  }
+  .hdr__burger {
+    display: block !important;
+  }
+}
+
+// ---------- Light / dark: explicit choice beats the system preference
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+// ---------- UI theme 2: "Sharp" (crisp editorial). "Soft" is the default look.
+:root[data-skin='sharp'] {
+  --radius-s: 2px;
+  --radius: 4px;
+  --radius-l: 6px;
+  --shadow: 0 0 0 1.5px var(--line);
+  --shadow-lift: 6px 6px 0 var(--teal-800);
+  --font-display: 'Manrope', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  :is(h1, h2, h3, .display, .h2) {
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  em {
+    font-style: normal;
+  }
+  :is(.btn, .hdr__bar, .hdr__link, .hdr__icon, .hdr__lang, .hdr__sub ul, .nc__tag, .np__tag, .chat__win, .chat__links a, .chat__chips button,
+    .chat__form input, .sp__panel, .sp__filters button, .nl__chips, .nl__chips button, .nl__year, .nl__search, .db__freq, .db__freqPill,
+    .hero__chip, .hero__chip strong, .ftr__social a, .ct__soc a, .np__share a, .np__share button, .marquee, .ap-band, .dn__secure) {
+    border-radius: 4px !important;
+  }
+  .btn:hover {
+    box-shadow: 4px 4px 0 var(--teal-900);
+  }
+  :is(.pcard, .tier, .nc__link, .b-person, .ct__card, .gov__card, .ap__track, .hrs__tier, .db__pkg, .dg__tab, .wtg__card) {
+    border-width: 1.5px;
+    border-color: color-mix(in srgb, var(--text) 22%, transparent);
+  }
+  .marquee {
+    transform: none;
+  }
+}
+:root[dir='rtl'][data-skin='sharp'] {
+  --font-display: 'IBM Plex Sans Arabic', 'Alexandria', sans-serif;
+}
+
+// ---------- Motion off: collapse every animation (3D scene and smooth scroll are stopped in JS)
+:root[data-motion='off'] {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal],
+  [data-reveal='clip'] > img,
+  [data-intro] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .illo__s {
+    stroke-dashoffset: 0 !important;
+  }
+  .illo__sun {
+    transform: none !important;
+  }
+}
+
+// ---------- Contrast schemes (Diwan parity): yellow on black, black on yellow, grayscale
+@mixin scheme($bg, $fg) {
+  --bg: #{$bg};
+  --bg-2: #{$bg};
+  --surface: #{$bg};
+  --text: #{$fg};
+  --text-2: #{$fg};
+  --line: #{$fg};
+  --brand: #{$fg};
+  --accent: #{$fg};
+  color-scheme: only light;
+  body *:not(img, video, canvas, iframe, svg, svg *, .hdr__logo, .hdr__logo *, .ftr__brand > img, .chat__head img) {
+    background-color: $bg !important;
+    background-image: none !important;
+    color: $fg !important;
+    border-color: $fg !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-text-fill-color: $fg !important;
+  }
+  svg :is(path, circle, rect):not([fill='none']) {
+    fill: $fg !important;
+  }
+  svg [stroke],
+  .illo__s,
+  .journey__glow {
+    stroke: $fg !important;
+  }
+  :is(.btn, .db__pkg, .hrs__tier, .dg__tab, .ct__tab, .zk__tabs button, .nl__chips button, .sp__filters button) {
+    border: 2px solid $fg !important;
+  }
+  :is(.btn, .is-on, [aria-selected='true'], [aria-checked='true']) {
+    background-color: $fg !important;
+    color: $bg !important;
+    -webkit-text-fill-color: $bg !important;
+    * {
+      background-color: $fg !important;
+      color: $bg !important;
+      -webkit-text-fill-color: $bg !important;
+    }
+  }
+  a {
+    text-decoration: underline !important;
+  }
+  :focus-visible {
+    outline: 3px solid $fg !important;
+    outline-offset: 3px !important;
+  }
+  // decorative layers off
+  :is(.hero__canvas, .hero__veil, .ph__bg, .ftr__sun, .bento__orb, .marquee, .loader__halo, .chat__sun) {
+    display: none !important;
+  }
+  .hero,
+  .ph {
+    min-height: auto;
+  }
+  // the logo is white artwork: always keep it on a dark plate so it stays exactly as designed
+  .hdr__logo,
+  .ftr__brand > img {
+    background: #000 !important;
+    border-radius: 8px;
+    padding: 4px 8px;
+  }
+}
+:root[data-a11y-contrast='yellow-black'] {
+  @include scheme(#000, #ff0);
+}
+:root[data-a11y-contrast='black-yellow'] {
+  @include scheme(#ff0, #000);
+}
+:root[data-a11y-contrast='gray'] body {
+  filter: grayscale(1);
+}
+
+// ---------- Extra reading aids
+:root[data-links='on'] a:not(.btn) {
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 3px;
+}
+:root[data-font='on'] {
+  --font-display: 'Atkinson Hyperlegible', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  em {
+    font-style: normal;
+  }
+}
+:root[data-spacing='on'] body {
+  letter-spacing: 0.04em;
+  word-spacing: 0.14em;
+  :is(p, li, .lead) {
+    line-height: 2 !important;
+  }
+}
+.reading-guide {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 900;
+  height: 44px;
+  pointer-events: none;
+  border-block: 2px solid var(--sun-500);
+  background: rgba(246, 141, 46, 0.08);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.35);
+  translate: 0 -50%;
+}

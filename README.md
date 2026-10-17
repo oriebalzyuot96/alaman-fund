@@ -39,3 +39,9 @@ npm run build      # static output in dist/
 3. `npm run media`: downloads every referenced image/PDF into `public/media`
 4. `node scripts/optimize-media.mjs`: resizes oversized photos
 5. `npm run content`: normalizes into `src/data/content.json` + `public/search-index.json`
+
+## Deploy
+
+Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with `BASE_PATH=/alaman-fund` and publishes to GitHub Pages: https://oriebalzyuot96.github.io/alaman-fund/
+
+Appearance and accessibility settings (Light/Dark/System, Soft/Sharp UI theme, contrast schemes, text size, animations, link highlighting, readable font, text spacing, reading guide, sounds) live in `src/components/Appearance.astro` and `src/styles/_themes.scss`. They are saved in `localStorage` under `aman:settings` and applied before first paint.

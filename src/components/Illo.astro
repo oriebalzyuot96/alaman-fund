@@ -110,8 +110,22 @@ const { name, class: cls } = Astro.props;
     stroke-dashoffset: 420;
     transition: stroke-dashoffset 1.8s var(--ease-out);
   }
-  :global(.dark-surface) .illo__s {
-    stroke: #fff;
+  :global(.dark-surface) .illo__s,
+  :global(:root[data-theme='dark']) .illo__s {
+    stroke: var(--teal-200);
+  }
+  :global(:root[data-theme='dark']) .illo__blob {
+    fill: rgba(255, 255, 255, 0.06);
+    opacity: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .illo__s {
+      stroke: var(--teal-200);
+    }
+    :global(:root:not([data-theme='light'])) .illo__blob {
+      fill: rgba(255, 255, 255, 0.06);
+      opacity: 1;
+    }
   }
   .illo__thin {
     stroke-width: 2.5;
