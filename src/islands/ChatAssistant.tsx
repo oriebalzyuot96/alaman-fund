@@ -48,6 +48,7 @@ export default function ChatAssistant({ lang, t }: Props) {
   useEffect(() => {
     if (open && !msgs.length) setMsgs([{ from: 'bot', text: t.chatHello }]);
     if (open) {
+      window.amanSound?.play('pop');
       setNudge(false);
       setTimeout(() => inputRef.current?.focus(), 250);
     }
@@ -69,6 +70,7 @@ export default function ChatAssistant({ lang, t }: Props) {
     const [answer] = await Promise.all([reply(lang, text, t), new Promise((r) => setTimeout(r, 650 + Math.random() * 500))]);
     setTyping(false);
     setMsgs((m) => [...m, answer]);
+    window.amanSound?.play('pop');
   };
 
   return (

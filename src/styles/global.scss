@@ -307,3 +307,26 @@ p {
     }
   }
 }
+
+// Press ripple added by lib/ui-sound.ts (ported from the Hub client)
+.aman-ripple-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.aman-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.22;
+  transform: scale(0);
+  animation: aman-ripple 0.6s var(--ease-out) forwards;
+}
+@keyframes aman-ripple {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}

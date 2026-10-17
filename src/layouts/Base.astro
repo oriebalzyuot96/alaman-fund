@@ -48,6 +48,7 @@ const quick = [
         d.dataset.motion = m === 'auto' ? (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'on') : m;
         if (s.fontScale) d.style.setProperty('--fs', s.fontScale);
         if (s.fontScale > 1) d.dataset.fsLarge = 'on';
+        if (s.sound === undefined) s.sound = matchMedia('(hover: hover) and (pointer: fine)').matches;
         ['links', 'font', 'spacing', 'guide', 'sound'].forEach(function (k) { if (s[k]) d.dataset[k] = 'on'; });
       })();
     </script>
@@ -77,6 +78,7 @@ const quick = [
 
     <script>
       import Lenis from 'lenis';
+      import '../lib/ui-sound';
 
       const motionOff = () => document.documentElement.dataset.motion === 'off';
       const reduce = motionOff();

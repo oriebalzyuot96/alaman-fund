@@ -67,6 +67,7 @@ const share = [
     b.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(b.dataset.copy!);
+        window.amanSound?.play('success');
         const old = b.textContent;
         b.textContent = '✓';
         setTimeout(() => (b.textContent = old), 1500);

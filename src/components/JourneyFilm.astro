@@ -103,6 +103,7 @@ const { kicker, title, chapters, labels } = Astro.props;
     });
     steps.forEach((s) =>
       s.addEventListener('click', () => {
+        window.amanSound?.play('step');
         video.currentTime = +s.dataset.seek! + 0.05;
         if (video.paused && !motionOff()) video.play();
         update();

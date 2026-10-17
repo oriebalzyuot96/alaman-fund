@@ -50,6 +50,7 @@ export default function SearchPalette({ lang, t, quick }: Props) {
   useEffect(() => {
     document.documentElement.classList.toggle('no-scroll', open);
     if (open) {
+      window.amanSound?.play('pop');
       searcher(lang); // warm the index
       setTimeout(() => inputRef.current?.focus(), 30);
     }

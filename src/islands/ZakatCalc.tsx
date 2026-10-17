@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './donate.scss';
 
 type Kind = 'wealth' | 'gold' | 'silver' | 'crops' | 'stocks';
@@ -91,6 +91,12 @@ export default function ZakatCalc({ lang, labels, donateHref }: Props) {
     due = nisab !== null && base >= nisab ? base * 0.025 : 0;
   }
   const filled = base > 0;
+  // a soft chime the moment the amount crosses the Nisab
+  const wasDue = useRef(false);
+  useEffect(() => {
+    if (due > 0 && !wasDue.current) window.amanSound?.play('success');
+    wasDue.current = due > 0;
+  }, [due]);
   const unit = kind === 'crops' ? (lang === 'ar' ? 'كغ' : 'kg') : lang === 'ar' ? 'دينار' : 'JOD';
 
   const field = (k: string, label: string) => (

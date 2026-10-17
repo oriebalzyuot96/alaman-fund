@@ -44,4 +44,6 @@ npm run build      # static output in dist/
 
 Pushing to `main` runs `.github/workflows/deploy.yml`, which builds with `BASE_PATH=/alaman-fund` and publishes to GitHub Pages: https://oriebalzyuot96.github.io/alaman-fund/
 
+UI sounds (ported from the Mashroo3Hub client: synthesised Web Audio ticks, pops, switches, whooshes and chimes, plus a press ripple) live in `src/lib/ui-sound.ts`; any script can call `window.amanSound.play("pop")`.
+
 Appearance and accessibility settings (Light/Dark/System, Soft/Sharp UI theme, contrast schemes, text size, animations, link highlighting, readable font, text spacing, reading guide, sounds) live in `src/components/Appearance.astro` and `src/styles/_themes.scss`. They are saved in `localStorage` under `aman:settings` and applied before first paint.

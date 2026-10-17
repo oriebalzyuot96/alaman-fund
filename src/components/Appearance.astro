@@ -115,7 +115,7 @@ const switches = [
   type S = { mode: string; skin: string; contrast: string; motion: string; fontScale: number; links?: boolean; font?: boolean; spacing?: boolean; guide?: boolean; sound?: boolean };
   const KEY = 'aman:settings';
   const SCALES = [0.875, 1, 1.125, 1.25, 1.5];
-  const DEF: S = { mode: 'system', skin: 'soft', contrast: 'none', motion: 'auto', fontScale: 1 };
+  const DEF: S = { mode: 'system', skin: 'soft', contrast: 'none', motion: 'auto', fontScale: 1, sound: matchMedia('(hover: hover) and (pointer: fine)').matches };
   const root = document.documentElement;
   const reducedQ = matchMedia('(prefers-reduced-motion: reduce)');
   const darkQ = matchMedia('(prefers-color-scheme: dark)');
@@ -178,12 +178,14 @@ const switches = [
       (s as any)[k] = el.type === 'radio' ? el.value : el.checked;
       save();
       apply();
+      if (k === 'sound' && s.sound) window.amanSound?.play('pop');
     }),
   );
   document.querySelectorAll<HTMLButtonElement>('[data-font-step]').forEach((b) =>
     b.addEventListener('click', () => {
       const step = +b.dataset.fontStep!;
       const i = SCALES.indexOf(s.fontScale);
+      window.amanSound?.play('step');
       s.fontScale = step === 0 ? 1 : SCALES[Math.min(Math.max((i < 0 ? 1 : i) + step, 0), SCALES.length - 1)];
       save();
       apply();
@@ -216,6 +218,7 @@ const switches = [
   const open = (on: boolean) => {
     panel.hidden = !on;
     trigger.setAttribute('aria-expanded', String(on));
+    window.amanSound?.play(on ? 'whoosh' : 'pop');
     if (on) (panel.querySelector('input:checked') as HTMLElement | null)?.focus();
     else trigger.focus();
   };
@@ -245,23 +248,6 @@ const switches = [
       removeEventListener('pointermove', move);
     }
   }
-
-  // interface sounds: a soft blip on clicks, only when enabled
-  let ctx: AudioContext | null = null;
-  document.addEventListener('click', (e) => {
-    if (root.dataset.sound !== 'on' || !(e.target as HTMLElement).closest('a, button, label')) return;
-    try {
-      ctx ??= new AudioContext();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.frequency.value = 660;
-      g.gain.setValueAtTime(0.06, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.09);
-      o.connect(g).connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.1);
-    } catch {}
-  });
 
   apply();
 </script>

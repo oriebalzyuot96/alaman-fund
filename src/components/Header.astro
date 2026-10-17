@@ -96,6 +96,7 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     burger.setAttribute('aria-expanded', String(open));
     hdr.classList.toggle('menu-open', open);
     if (open) menu.hidden = false;
+    window.amanSound?.play(open ? 'whoosh' : 'pop');
     requestAnimationFrame(() => menu.classList.toggle('is-open', open));
     document.documentElement.classList.toggle('no-scroll', open);
     if (!open) setTimeout(() => (menu.hidden = true), 600);
