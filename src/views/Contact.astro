@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 import Base from '../layouts/Base.astro';
 import PageHero from '../components/PageHero.astro';
 import { data, ui, socials, type Lang } from '../lib/i18n';
@@ -24,17 +25,17 @@ const email = h3[1];
     <div class="container">
       <div class="ct__cards">
         <a class="ct__card" href="tel:+96265330500" data-reveal data-tilt>
-          <span class="ct__ico" aria-hidden="true">☎</span>
+          <span class="ct__ico" aria-hidden="true"><Icon name="phone" size={22} /></span>
           <small>{h4[0]}</small>
           <strong dir="ltr">{phone}</strong>
         </a>
         <a class="ct__card" href={`mailto:${email}`} data-reveal data-tilt style="--d:1">
-          <span class="ct__ico" aria-hidden="true">✉</span>
+          <span class="ct__ico" aria-hidden="true"><Icon name="mail" size={22} /></span>
           <small>{h4[1]}</small>
           <strong>{email}</strong>
         </a>
         <div class="ct__card ct__card--social" data-reveal style="--d:2">
-          <span class="ct__ico" aria-hidden="true">✦</span>
+          <span class="ct__ico" aria-hidden="true"><Icon name="users" size={22} /></span>
           <small>{h4[2]}</small>
           <div class="ct__soc">{socials.map((s) => <a href={s.href} target="_blank" rel="noopener">{s.name}</a>)}</div>
         </div>

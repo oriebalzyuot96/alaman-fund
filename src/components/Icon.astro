@@ -1,0 +1,21 @@
+---
+// One stroke icon set for the whole UI (24px grid, 1.8 stroke, round caps), so every icon matches.
+import { icons, type IconName } from '../lib/icons';
+interface Props { name: IconName; size?: number; class?: string; label?: string }
+const { name, size = 20, class: cls, label } = Astro.props;
+---
+<svg
+  class:list={['icon', cls]}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.8"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  set:html={icons[name]}
+/>

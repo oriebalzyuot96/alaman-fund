@@ -5,6 +5,9 @@ import HeroScene from '../islands/HeroScene';
 import Illo from '../components/Illo.astro';
 import Video from '../components/Video.astro';
 import NewsCard from '../components/NewsCard.astro';
+import JourneyFilm from '../components/JourneyFilm.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../lib/icons';
 import { data, ui, href, fmtDate, type Lang } from '../lib/i18n';
 
 interface Props { lang: Lang }
@@ -49,6 +52,39 @@ const excellence = D.pages['pursuing-excellence'].sections.flat();
 const award = excellence.find((b) => b.t === 'h2' && excellence.indexOf(b) > 0);
 const awardText = excellence.find((b) => b.t === 'p')?.text;
 const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
+const statIcons: IconName[] = ['clock', 'users', 'heart', 'cap', 'briefcase', 'book', 'growth'];
+
+const film = {
+  kicker: lang === 'ar' ? 'فيلم ثلاثي الأبعاد' : 'A 3D short film',
+  title: lang === 'ar' ? 'رحلة الأمان: طريق آمن نحو المستقبل' : 'The Al Aman journey: a safe path to the future',
+  chapters: [
+    { at: 0, icon: 'home', title: journey[0].title, text: journey[0].text },
+    { at: 4, icon: 'cap', title: programs[0]?.title, text: firstSentence(programs[0]?.text || '') },
+    { at: 9, icon: 'shield', title: programs[1]?.title, text: firstSentence(programs[1]?.text || '') },
+    { at: 13.5, icon: 'growth', title: programs[2]?.title, text: firstSentence(programs[2]?.text || '') },
+    { at: 17.5, icon: 'users', title: `${programs[3]?.title} · ${programs[4]?.title}`, text: firstSentence(programs[4]?.text || '') },
+    { at: 21, icon: 'sun', title: journey[4].title, text: journey[4].text },
+  ] as { at: number; icon: IconName; title: string; text: string }[],
+};
+
+// A real quote from Her Majesty, taken from the royal news coverage.
+const quoteSrc = royal.find((n) => /^Queen Rania:/i.test(n.title));
+const arQuote = royal
+  .flatMap((n) => n.body.filter((b) => b.t === 'p').map((b) => ({ n, m: b.text!.match(/[«“"]([^»”"]{50,240})[»”"]/) })))
+  .find((x) => x.m);
+const quote =
+  lang === 'en' && quoteSrc
+    ? { text: quoteSrc.title.split(':').slice(1).join(':').trim(), href: href(lang, `news/${quoteSrc.id}`) }
+    : arQuote
+      ? { text: arQuote.m![1].trim(), href: href(lang, `news/${arQuote.n.id}`) }
+      : null;
+
+const awards = excellence
+  .map((b, i) => (b.t === 'img' && excellence[i + 1]?.t === 'h2' ? { img: b.src!, title: excellence[i + 1].text! } : null))
+  .filter(Boolean)
+  .slice(0, 3) as { img: string; title: string }[];
+const partnerLogos = D.pages['ways-to-give/our-partners'].sections.flat().filter((b) => b.t === 'img').map((b) => b.src!);
+const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t === 'h2').slice(0, 3).map((b) => b.text!);
 ---
 <Base lang={lang} title={t.orgName} scene>
   <!-- HERO -->
@@ -64,8 +100,8 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
       </h1>
       <p class="lead hero__lead" data-intro style="--d:4">{intro}</p>
       <div class="hero__ctas" data-intro style="--d:5">
-        <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate} <svg class="arrow" width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
-        <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{t.apply}</a>
+        <a class="btn" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={18} /> {t.donate}</a>
+        <a class="btn btn--ghost" href={href(lang, 'application-portal')}><Icon name="cap" size={18} /> {t.apply}</a>
       </div>
     </div>
     <div class="hero__aside container" data-intro style="--d:6">
@@ -116,6 +152,10 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
           const n = num(s.value);
           return (
             <div class:list={['bento__it', `bento__it--${i}`]} data-reveal data-tilt style={`--d:${i % 4}`}>
+              <span class="bento__icon"><Icon name={statIcons[i]} size={20} /></span>
+              {s.value.includes('%') && (
+                <svg class="bento__ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" /><circle class="bento__ringFill" cx="22" cy="22" r="18" pathLength="100" style={`--p:${num(s.value)}`} /></svg>
+              )}
               <strong>{isNaN(n) ? s.value : <><span data-count={n}>0</span>{s.value.includes('%') ? '%' : ''}</>}</strong>
               <span>{s.text}</span>
               {i === 1 && <div class="bento__orb" aria-hidden="true"></div>}
@@ -126,31 +166,8 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
     </div>
   </section>
 
-  <!-- JOURNEY -->
-  <section class="section journey">
-    <div class="container">
-      <div class="section-head">
-        <p class="kicker" data-reveal>{t.journeyKicker}</p>
-        <h2 class="h2" data-reveal style="--d:1">{t.journeyTitle}</h2>
-      </div>
-      <div class="journey__track" id="journey">
-        <svg class="journey__path" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true">
-          <path class="journey__base" d="M0 60 C 100 0, 150 120, 250 60 S 400 0, 500 60 S 650 120, 750 60 S 900 0, 1000 60" />
-          <path class="journey__glow" pathLength="1" d="M0 60 C 100 0, 150 120, 250 60 S 400 0, 500 60 S 650 120, 750 60 S 900 0, 1000 60" />
-        </svg>
-        <ol class="journey__steps">
-          {journey.map((s, i) => (
-            <li class="journey__step" data-reveal style={`--d:${i}`}>
-              <div class="journey__illo"><Illo name={s.illo} /></div>
-              <span class="journey__n">0{i + 1}</span>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
+  <!-- FILM: the 3D journey -->
+  <JourneyFilm kicker={film.kicker} title={film.title} chapters={film.chapters} labels={{ play: t.watch, pause: lang === 'ar' ? 'إيقاف مؤقت' : 'Pause' }} />
 
   <!-- PROGRAMS -->
   <section class="section programs">
@@ -213,6 +230,44 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
     </div>
   </section>
 
+  {quote && (
+    <section class="section quote">
+      <div class="container quote__in">
+        <span class="quote__mark" aria-hidden="true"><Icon name="quote" size={56} /></span>
+        <blockquote data-reveal>
+          <p>{quote.text}</p>
+          <footer>
+            <strong>{lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'}</strong>
+            <span>{lang === 'ar' ? 'مؤسِّسة صندوق الأمان' : 'Founder of Al Aman Fund'}</span>
+          </footer>
+        </blockquote>
+        <a class="link-arrow" href={quote.href} data-reveal>{t.readMore} <Icon name="arrow" size={16} /></a>
+      </div>
+    </section>
+  )}
+
+  <!-- AWARDS -->
+  <section class="section awards">
+    <div class="container">
+      <div class="section-head section-head--row">
+        <div>
+          <p class="kicker" data-reveal>{lang === 'ar' ? 'التميّز' : 'Recognition'}</p>
+          <h2 class="h2" data-reveal style="--d:1">{D.pages['pursuing-excellence'].title}</h2>
+        </div>
+        <a class="link-arrow" href={href(lang, 'pursuing-excellence')} data-reveal>{t.learnMore} <Icon name="arrow" size={16} /></a>
+      </div>
+      <div class="awards__grid">
+        {awards.map((a, i) => (
+          <a class="award" href={href(lang, 'pursuing-excellence')} data-reveal data-tilt style={`--d:${i}`}>
+            <div class="award__img"><img src={a.img} alt="" loading="lazy" /></div>
+            <span class="award__badge"><Icon name="award" size={20} /></span>
+            <h3>{a.title}</h3>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
   <!-- NEWS -->
   <section class="section news">
     <div class="container">
@@ -225,6 +280,41 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
       </div>
       <div class="ngrid">
         {news.map((p, i) => <NewsCard lang={lang} post={p} big={i === 0} i={i} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- PARTNERS -->
+  <section class="partners" aria-label={D.pages['ways-to-give/our-partners'].title}>
+    <div class="container partners__head">
+      <p class="kicker" data-reveal>{D.pages['ways-to-give/our-partners'].title}</p>
+      <a class="link-arrow" href={href(lang, 'ways-to-give/our-partners')} data-reveal>{t.learnMore} <Icon name="arrow" size={16} /></a>
+    </div>
+    {[0, 1].map((row) => (
+      <div class:list={['partners__row', { 'partners__row--rev': row === 1 }]} aria-hidden="true">
+        <div class="partners__track">
+          {[0, 1].map(() => partnerLogos.filter((_, i) => i % 2 === row).map((src) => <span class="partners__logo"><img src={src} alt="" loading="lazy" /></span>))}
+        </div>
+      </div>
+    ))}
+  </section>
+
+  <!-- YOUTH -->
+  <section class="section youth">
+    <div class="container">
+      <div class="youth__box dark-surface" data-reveal>
+        <div class="youth__text">
+          <p class="kicker">{lang === 'ar' ? 'للشباب' : 'For young people'}</p>
+          <h2 class="h2">{lang === 'ar' ? 'غادرت دار الرعاية أو تواجه ظروفاً صعبة؟ صندوق الأمان معك.' : 'Leaving care, or facing hard circumstances? Al Aman is here for you.'}</h2>
+          <ul class="youth__tracks">
+            {tracks.map((tr, i) => <li><Icon name={(['cap', 'book', 'briefcase'] as IconName[])[i]} size={18} /> {tr}</li>)}
+          </ul>
+          <div class="youth__ctas">
+            <a class="btn" href="https://eligibility.alamanfund.jo/" target="_blank" rel="noopener"><Icon name="check" size={18} /> {t.apply}</a>
+            <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{D.pages['application-portal'].title}</a>
+          </div>
+        </div>
+        <div class="youth__illo"><Illo name="apply" /></div>
       </div>
     </div>
   </section>
@@ -930,6 +1020,252 @@ const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
         grid-column: auto;
       }
     }
+  }
+
+  // BENTO extras
+  .bento__icon {
+    position: absolute;
+    top: 22px;
+    inset-inline-start: 24px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: $sun-300;
+    .bento__it--4 & {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+  }
+  .bento__ring {
+    position: absolute;
+    top: 18px;
+    inset-inline-end: 20px;
+    width: 64px;
+    transform: rotate(-90deg);
+    circle {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.14);
+      stroke-width: 4;
+    }
+    .bento__ringFill {
+      stroke: $sun-300;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      transition: stroke-dashoffset 2s var(--ease-out) 0.3s;
+    }
+    .bento__it--4 & .bento__ringFill {
+      stroke: #fff;
+    }
+  }
+  .bento__it:global(.is-in) .bento__ringFill {
+    stroke-dashoffset: calc(100 - var(--p));
+  }
+
+  // QUOTE
+  .quote__in {
+    position: relative;
+    display: grid;
+    gap: 26px;
+    justify-items: center;
+    text-align: center;
+    blockquote {
+      margin: 0;
+      display: grid;
+      gap: 26px;
+    }
+    p {
+      font: 400 clamp(1.8rem, 4vw, 3.4rem) / 1.2 var(--font-display);
+      max-width: 22ch;
+      margin-inline: auto;
+      text-wrap: balance;
+    }
+    footer {
+      display: grid;
+      gap: 4px;
+      strong {
+        color: var(--sun-600);
+      }
+      span {
+        color: var(--text-2);
+        font-size: 0.9rem;
+      }
+    }
+  }
+  .quote__mark {
+    color: $sun-500;
+  }
+
+  // AWARDS
+  .awards {
+    padding-top: 0;
+  }
+  .awards__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .award {
+    position: relative;
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    padding: 14px 14px 26px;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
+    h3 {
+      padding-inline: 12px;
+      font-size: 1.2rem;
+      line-height: 1.3;
+    }
+  }
+  .award__img {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-2);
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  .award__badge {
+    position: absolute;
+    top: 26px;
+    inset-inline-end: 26px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: $sun-500;
+    color: #fff;
+    box-shadow: 0 10px 24px -8px rgba(246, 141, 46, 0.8);
+  }
+
+  // PARTNERS
+  .partners {
+    padding-block: clamp(50px, 7vw, 90px);
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+  }
+  .partners__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+  }
+  .partners__row {
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    & + & {
+      margin-top: 14px;
+    }
+  }
+  .partners__track {
+    display: flex;
+    gap: 14px;
+    width: max-content;
+    animation: marquee 60s linear infinite;
+    .partners__row--rev & {
+      animation-direction: reverse;
+    }
+    &:hover {
+      animation-play-state: paused;
+    }
+    :global([dir='rtl']) & {
+      animation-name: marquee-rtl;
+    }
+  }
+  .partners__logo {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 170px;
+    height: 92px;
+    padding: 16px 22px;
+    border-radius: var(--radius);
+    background: #fff;
+    border: 1px solid var(--line);
+    img {
+      max-height: 100%;
+      width: auto;
+      object-fit: contain;
+      filter: grayscale(1);
+      opacity: 0.75;
+      transition: filter 0.4s, opacity 0.4s;
+    }
+    &:hover img {
+      filter: none;
+      opacity: 1;
+    }
+  }
+
+  // YOUTH
+  .youth__box {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr;
+    gap: 40px;
+    align-items: center;
+    padding: clamp(32px, 5vw, 70px);
+    border-radius: var(--radius-l);
+    background: radial-gradient(80% 120% at 100% 100%, rgba(246, 141, 46, 0.4), transparent 60%), $teal-900;
+    color: #fff;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+    .kicker {
+      color: $sun-300;
+    }
+  }
+  .youth__text {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+    .h2 {
+      font-size: clamp(1.7rem, 3.2vw, 2.8rem);
+      max-width: 22ch;
+    }
+  }
+  .youth__tracks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    li {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: $sun-300;
+    }
+  }
+  .youth__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .youth__illo {
+    max-width: 260px;
+    justify-self: center;
   }
 
   // GIVE

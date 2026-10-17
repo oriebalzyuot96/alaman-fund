@@ -1,5 +1,6 @@
 ---
 import type { Lang } from '../lib/i18n';
+import Icon from './Icon.astro';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const ar = lang === 'ar';
@@ -33,12 +34,13 @@ const switches = [
 ] as const;
 ---
 <div class="ap">
-  <button class="hdr__icon ap__mode" type="button" data-quick-mode aria-label={`${T.mode}: ${T.dark}`}>
-    <svg class="ap__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" /><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" /></svg>
-    <svg class="ap__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" /></svg>
+  <button class="hdr__icon ap__mode" type="button" data-quick-mode data-labels={JSON.stringify({ light: T.light, dark: T.dark, system: T.system, mode: T.mode })} aria-label={T.mode}>
+    <span class="ap__ico ap__ico--light"><Icon name="sun" /></span>
+    <span class="ap__ico ap__ico--dark"><Icon name="moon" /></span>
+    <span class="ap__ico ap__ico--system"><Icon name="monitor" /></span>
   </button>
   <button class="hdr__icon" type="button" aria-expanded="false" aria-controls="appearance" data-ap-trigger aria-label={T.title}>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></svg>
+    <Icon name="sliders" />
   </button>
 
   <section class="ap__panel" id="appearance" role="dialog" aria-modal="false" aria-labelledby="ap-title" hidden>
@@ -51,8 +53,8 @@ const switches = [
     <fieldset>
       <legend>{T.mode}</legend>
       <div class="ap__choices ap__choices--3">
-        {[['light', T.light, '☀'], ['dark', T.dark, '☾'], ['system', T.system, '◐']].map(([v, l, i]) => (
-          <label class="ap__choice"><input type="radio" name="ap-mode" value={v} data-set="mode" /><span><b aria-hidden="true">{i}</b>{l}</span></label>
+        {([['light', T.light, 'sun'], ['dark', T.dark, 'moon'], ['system', T.system, 'monitor']] as const).map(([v, l, i]) => (
+          <label class="ap__choice"><input type="radio" name="ap-mode" value={v} data-set="mode" /><span><b aria-hidden="true"><Icon name={i} size={18} /></b>{l}</span></label>
         ))}
       </div>
     </fieldset>
@@ -161,7 +163,13 @@ const switches = [
     const out = document.querySelector('[data-font-value]');
     if (out) out.textContent = `${Math.round(s.fontScale * 100)}%`;
     const q = document.querySelector<HTMLElement>('[data-quick-mode]');
-    q?.classList.toggle('is-dark', isDark());
+    if (q) {
+      q.dataset.mode = s.mode;
+      const L = JSON.parse(q.dataset.labels || '{}');
+      q.setAttribute('aria-label', `${L.mode}: ${L[s.mode]}`);
+      q.title = `${L.mode}: ${L[s.mode]}`;
+    }
+    document.querySelectorAll<HTMLElement>('[data-mode-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modePick === s.mode)));
   };
 
   document.querySelectorAll<HTMLInputElement>('[data-set]').forEach((el) =>
@@ -187,10 +195,18 @@ const switches = [
     apply();
   });
   document.querySelector('[data-quick-mode]')?.addEventListener('click', () => {
-    s.mode = isDark() ? 'light' : 'dark';
+    s.mode = s.mode === 'light' ? 'dark' : s.mode === 'dark' ? 'system' : 'light';
     save();
     apply();
   });
+  // segmented mode buttons elsewhere in the UI (mobile menu)
+  document.querySelectorAll<HTMLButtonElement>('[data-mode-pick]').forEach((b) =>
+    b.addEventListener('click', () => {
+      s.mode = b.dataset.modePick!;
+      save();
+      apply();
+    }),
+  );
   darkQ.addEventListener('change', sync);
   reducedQ.addEventListener('change', apply);
 
@@ -259,36 +275,22 @@ const switches = [
     align-items: center;
     gap: 2px;
   }
-  .ap__mode {
-    .ap__moon {
-      display: none;
-    }
-    &:global(.is-dark) {
-      .ap__sun {
-        display: block;
-      }
-      .ap__moon {
-        display: none;
-      }
-    }
-    &:not(:global(.is-dark)) {
-      .ap__sun {
-        display: none;
-      }
-      .ap__moon {
-        display: block;
-      }
-    }
-    @include down(640px) {
-      display: none;
-    }
+  .ap__ico {
+    display: none;
+    line-height: 0;
   }
-  .ap :global(.hdr__icon) svg {
-    width: 19px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
+  .ap__mode:not([data-mode]) .ap__ico--system,
+  .ap__mode[data-mode='light'] .ap__ico--light,
+  .ap__mode[data-mode='dark'] .ap__ico--dark,
+  .ap__mode[data-mode='system'] .ap__ico--system {
+    display: block;
+    animation: ap-spin 0.5s var(--ease-out);
+  }
+  @keyframes ap-spin {
+    from {
+      transform: rotate(-90deg) scale(0.6);
+      opacity: 0;
+    }
   }
   .ap__panel {
     position: absolute;

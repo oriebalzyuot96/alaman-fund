@@ -4,3 +4,4 @@ dist/
 raw/html/
 *.log
 .env
+film/out/

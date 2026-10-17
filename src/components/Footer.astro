@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { withBase } from '../lib/base';
 import { ui, nav, href, data, policySlugs, socials, type Lang } from '../lib/i18n';
 interface Props { lang: Lang }
@@ -49,9 +50,9 @@ const icons: Record<string, string> = {
     <div>
       <h3>{t.contact}</h3>
       <ul class="ftr__contact">
-        <li><a href="tel:+96265330500" dir="ltr">+962 6 5330500</a></li>
-        <li><a href="mailto:info@alamanfund.jo">info@alamanfund.jo</a></li>
-        <li>{lang === 'ar' ? 'شارع محمد السعيد البطاينة 5، عمّان' : 'Mohammed Al-Saeed Al-Bataineh Street 5, Amman'}</li>
+        <li><Icon name="phone" size={16} /><a href="tel:+96265330500" dir="ltr">+962 6 5330500</a></li>
+        <li><Icon name="mail" size={16} /><a href="mailto:info@alamanfund.jo">info@alamanfund.jo</a></li>
+        <li><Icon name="pin" size={16} /><span>{lang === 'ar' ? 'شارع محمد السعيد البطاينة 5، عمّان' : 'Mohammed Al-Saeed Al-Bataineh Street 5, Amman'}</span></li>
       </ul>
     </div>
   </div>
@@ -143,6 +144,16 @@ const icons: Record<string, string> = {
     }
     a:hover {
       color: #fff;
+    }
+  }
+  .ftr__contact li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    :global(.icon) {
+      flex: none;
+      margin-top: 4px;
+      color: $sun-300;
     }
   }
   .ftr__brand {

@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { withBase } from '../lib/base';
 import { ui, nav, href, altPath, type Lang } from '../lib/i18n';
 import Appearance from './Appearance.astro';
@@ -38,12 +39,12 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
 
     <div class="hdr__actions">
       <button class="hdr__icon" type="button" data-open-search aria-label={t.search}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+        <Icon name="search" size={19} />
         <kbd>⌘K</kbd>
       </button>
       <Appearance lang={lang} />
-      <a class="hdr__lang" href={altPath(lang, path)} hreflang={lang === 'en' ? 'ar' : 'en'} lang={lang === 'en' ? 'ar' : 'en'}>{t.langSwitch}</a>
-      <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
+      <a class="hdr__lang" href={altPath(lang, path)} hreflang={lang === 'en' ? 'ar' : 'en'} lang={lang === 'en' ? 'ar' : 'en'}><Icon name="globe" size={17} /> <span>{t.langSwitch}</span></a>
+      <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={17} /> {t.donate}</a>
       <button class="hdr__burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span></button>
     </div>
   </div>
@@ -62,9 +63,15 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
           </li>
         ))}
       </ul>
+      <div class="mnav__modes" role="group" aria-label={lang === 'ar' ? 'الوضع' : 'Mode'}>
+        <button type="button" data-mode-pick="light" aria-pressed="false"><Icon name="sun" size={18} /> {lang === 'ar' ? 'فاتح' : 'Light'}</button>
+        <button type="button" data-mode-pick="dark" aria-pressed="false"><Icon name="moon" size={18} /> {lang === 'ar' ? 'داكن' : 'Dark'}</button>
+        <button type="button" data-mode-pick="system" aria-pressed="false"><Icon name="monitor" size={18} /> {lang === 'ar' ? 'النظام' : 'System'}</button>
+      </div>
       <div class="mnav__foot">
-        <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
-        <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{t.apply}</a>
+        <a class="btn" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={18} /> {t.donate}</a>
+        <a class="btn btn--ghost" href={href(lang, 'application-portal')}><Icon name="cap" size={18} /> {t.apply}</a>
+        <a class="btn btn--ghost" href={altPath(lang, path)}><Icon name="globe" size={18} /> {t.langSwitch}</a>
       </div>
     </div>
   </div>
@@ -273,6 +280,9 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     }
   }
   .hdr__lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 10px 12px;
     border-radius: 999px;
     font-weight: 600;
@@ -377,6 +387,28 @@ const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.
     a {
       color: rgba(255, 255, 255, 0.65);
       font-size: 0.95rem;
+    }
+  }
+  .mnav__modes {
+    display: inline-flex;
+    gap: 4px;
+    margin-top: 36px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.75);
+      &[aria-pressed='true'] {
+        background: #fff;
+        color: var(--teal-900);
+      }
     }
   }
   .mnav__foot {
