@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Blocks from '../components/Blocks.astro';
+import { data, type Lang } from '../lib/i18n';
+import { crumbs, sectionKicker } from '../lib/crumbs';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const page = data[lang].pages[slug];
+const blocks = page.sections.flat();
+// Use the first short paragraph as the hero lead when the page opens with one.
+const lead = blocks[0]?.t === 'p' && blocks[0].text!.length < 260 ? blocks.shift()!.text : undefined;
+const heroImg = blocks.find((b) => b.t === 'img' && !/\.(svg)$/.test(b.src!) && !/logo/i.test(b.src!))?.src;
+---
+<Base lang={lang} title={page.title} description={page.desc} image={page.image}>
+  <PageHero lang={lang} title={page.title} kicker={sectionKicker(lang, slug)} lead={lead} crumbs={crumbs(lang, slug)} image={heroImg} />
+  <section class="section gen">
+    <div class="container">
+      <Blocks blocks={blocks} lang={lang} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .gen {
+    padding-top: clamp(40px, 6vw, 80px);
+  }
+</style>

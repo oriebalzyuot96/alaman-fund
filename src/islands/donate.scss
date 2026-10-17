@@ -1,0 +1,290 @@
+@use '../styles/mixins' as *;
+
+// ---------- Donate builder
+.db {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  @include down(900px) {
+    grid-template-columns: 1fr;
+  }
+}
+.db__col {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.db__col--sum {
+  position: sticky;
+  top: 110px;
+  padding: 28px;
+  border-radius: var(--radius-l);
+  background: radial-gradient(120% 90% at 100% 0%, var(--teal-700), var(--teal-900));
+  color: #fff;
+  box-shadow: var(--shadow-lift);
+  @include down(900px) {
+    position: static;
+  }
+}
+.db__h {
+  font: 700 0.8rem/1 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sun-600);
+  .db__col--sum & {
+    color: var(--sun-300);
+  }
+}
+.db__pkgs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.db__pkg {
+  display: grid;
+  gap: 8px;
+  text-align: start;
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  transition: border-color 0.3s, transform 0.4s var(--ease-out), box-shadow 0.4s;
+  @include focus-ring;
+  &:hover {
+    transform: translateY(-3px);
+  }
+  &.is-on {
+    border-color: var(--sun-500);
+    box-shadow: 0 16px 34px -18px rgba(246, 141, 46, 0.65);
+    background: linear-gradient(var(--surface), var(--surface)) padding-box;
+  }
+}
+.db__pkgName {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.db__pkgPrice {
+  font: 400 1.4rem/1 var(--font-display);
+  color: var(--sun-600);
+  small {
+    font: 600 0.75rem/1 var(--font-body);
+    color: var(--text-2);
+  }
+}
+.db__freq {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  button {
+    position: relative;
+    z-index: 1;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s;
+    &.is-on {
+      color: var(--teal-900);
+    }
+  }
+}
+.db__freqPill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: #fff;
+  transition: inset-inline-start 0.5s var(--ease-out);
+}
+.db__amts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  button,
+  .db__custom {
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    transition: border-color 0.3s, background 0.3s;
+    small {
+      opacity: 0.6;
+      font-size: 0.7rem;
+    }
+    &.is-on {
+      border-color: var(--sun-500);
+      background: rgba(246, 141, 46, 0.18);
+    }
+  }
+  .db__custom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: none;
+      color: #fff;
+      font: 700 1rem/1 var(--font-body);
+      outline: none;
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+      }
+    }
+  }
+}
+.db__sum {
+  display: grid;
+  gap: 4px;
+  padding: 18px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  span {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+  strong {
+    font: 400 3rem/1 var(--font-display);
+    color: var(--sun-300);
+    animation: db-pop 0.5s var(--ease-out);
+    small {
+      font: 600 0.9rem/1 var(--font-body);
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+  em {
+    font-style: normal;
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+}
+@keyframes db-pop {
+  from {
+    transform: translateY(8px);
+    opacity: 0.2;
+  }
+}
+.db__cta {
+  justify-content: center;
+}
+.db__note {
+  font-size: 0.78rem;
+  opacity: 0.65;
+  line-height: 1.5;
+}
+
+// ---------- Zakat calculator
+.zk {
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.zk__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  overflow-x: auto;
+  background: var(--bg-2);
+  scrollbar-width: none;
+  button {
+    flex: 1 0 auto;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-2);
+    white-space: nowrap;
+    transition: background 0.3s, color 0.3s;
+    &.is-on {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+  }
+}
+.zk__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  padding: clamp(20px, 3vw, 36px);
+  @include down(800px) {
+    grid-template-columns: 1fr;
+  }
+}
+.zk__fields {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.zk__f {
+  display: grid;
+  gap: 6px;
+  span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  input,
+  select {
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    font: 600 1.05rem/1.2 var(--font-body);
+    outline: none;
+    transition: border-color 0.3s;
+    &:focus {
+      border-color: var(--sun-500);
+    }
+  }
+}
+.zk__out {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  justify-items: start;
+  padding: 26px;
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, var(--sun-100), transparent 80%);
+  border: 1px solid var(--line);
+}
+.zk__lbl {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sun-600);
+}
+.zk__due {
+  font: 400 clamp(2.6rem, 5vw, 3.6rem) / 1 var(--font-display);
+  color: var(--text);
+  small {
+    font: 600 1rem/1 var(--font-body);
+    color: var(--text-2);
+  }
+}
+.zk__nisab {
+  font-size: 0.88rem;
+  color: var(--text-2);
+}
+.zk__msg {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--teal-700);
+}
+.zk__note {
+  font-size: 0.78rem;
+  color: var(--text-2);
+}

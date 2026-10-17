@@ -1,0 +1,384 @@
+---
+import { ui, nav, href, altPath, type Lang } from '../lib/i18n';
+interface Props { lang: Lang; path: string }
+const { lang, path } = Astro.props;
+const t = ui[lang];
+const items = nav(lang);
+const isActive = (h: string) => h !== '/' && h !== '/ar' && (path === h || path.startsWith(h + '/'));
+---
+<header class="hdr" id="hdr">
+  <div class="hdr__bar">
+    <a class="hdr__logo" href={href(lang, '')} aria-label={t.orgName}>
+      <img src="/logo-white.png" alt={t.orgName} width="600" height="237" />
+    </a>
+
+    <nav class="hdr__nav" aria-label="Primary">
+      <ul>
+        {items.map((it) => (
+          <li class:list={['hdr__item', { 'has-sub': it.children, 'is-active': isActive(it.href) }]}>
+            <a href={it.href} class="hdr__link">
+              {it.label}
+              {it.children && <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>}
+            </a>
+            {it.children && (
+              <div class="hdr__sub">
+                <ul>
+                  {it.children.map((c, i) => (
+                    <li style={`--i:${i}`}><a href={c.href}>{c.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="hdr__actions">
+      <button class="hdr__icon" type="button" data-open-search aria-label={t.search}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+        <kbd>⌘K</kbd>
+      </button>
+      <a class="hdr__lang" href={altPath(lang, path)} hreflang={lang === 'en' ? 'ar' : 'en'} lang={lang === 'en' ? 'ar' : 'en'}>{t.langSwitch}</a>
+      <a class="btn hdr__cta" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
+      <button class="hdr__burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span></button>
+    </div>
+  </div>
+
+  <div class="mnav" id="mnav" hidden>
+    <div class="mnav__inner">
+      <ul>
+        {items.map((it, i) => (
+          <li style={`--i:${i}`}>
+            <a href={it.href} class="mnav__top">{it.label}</a>
+            {it.children && (
+              <ul class="mnav__sub">
+                {it.children.slice(1).map((c) => <li><a href={c.href}>{c.label}</a></li>)}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div class="mnav__foot">
+        <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
+        <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{t.apply}</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  const hdr = document.getElementById('hdr')!;
+  let last = 0;
+  const onScroll = () => {
+    const y = window.scrollY;
+    hdr.classList.toggle('is-scrolled', y > 24);
+    hdr.classList.toggle('is-hidden', y > 400 && y > last && !hdr.classList.contains('menu-open'));
+    last = y;
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  const burger = hdr.querySelector<HTMLButtonElement>('.hdr__burger')!;
+  const menu = document.getElementById('mnav')!;
+  burger.addEventListener('click', () => {
+    const open = burger.getAttribute('aria-expanded') !== 'true';
+    burger.setAttribute('aria-expanded', String(open));
+    hdr.classList.toggle('menu-open', open);
+    if (open) menu.hidden = false;
+    requestAnimationFrame(() => menu.classList.toggle('is-open', open));
+    document.documentElement.classList.toggle('no-scroll', open);
+    if (!open) setTimeout(() => (menu.hidden = true), 600);
+  });
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .hdr {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 100;
+    padding: 14px var(--gutter);
+    transition: transform 0.6s var(--ease-out), padding 0.5s var(--ease-out);
+    &.is-hidden {
+      transform: translateY(-120%);
+    }
+    &.is-scrolled {
+      padding-top: 10px;
+    }
+  }
+  .hdr__bar {
+    @include glass(0.62);
+    max-width: var(--max);
+    margin-inline: auto;
+    height: 64px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-inline: 22px 10px;
+    color: #fff;
+    box-shadow: 0 20px 50px -20px rgba(0, 20, 24, 0.5);
+    transition: background 0.4s;
+    .is-scrolled & {
+      background: rgba(0, 38, 43, 0.82);
+    }
+  }
+  .hdr__logo img {
+    height: 40px;
+    width: auto;
+  }
+  .hdr__nav {
+    margin-inline: auto;
+    @include down(1160px) {
+      display: none;
+    }
+    > ul {
+      display: flex;
+      gap: 2px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+  }
+  .hdr__item {
+    position: relative;
+  }
+  .hdr__link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.86);
+    transition: color 0.3s, background 0.3s;
+    @include focus-ring;
+    .chev {
+      width: 11px;
+      transition: transform 0.4s var(--ease-out);
+    }
+    .hdr__item:hover &,
+    .hdr__item:focus-within &,
+    .is-active > & {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .is-active > & {
+      color: var(--sun-300);
+    }
+    .hdr__item:hover & .chev {
+      transform: rotate(180deg);
+    }
+  }
+  .hdr__sub {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: -8px;
+    padding-top: 14px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.35s, transform 0.5s var(--ease-out), visibility 0.35s;
+    .hdr__item:hover &,
+    .hdr__item:focus-within & {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px;
+      min-width: 260px;
+      border-radius: 20px;
+      background: rgba(0, 38, 43, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+    }
+    li {
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.4s, transform 0.5s var(--ease-out);
+      transition-delay: calc(var(--i) * 40ms);
+      .hdr__item:hover &,
+      .hdr__item:focus-within & {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    a {
+      display: block;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.82);
+      transition: background 0.25s, color 0.25s, padding 0.35s var(--ease-out);
+      &:hover,
+      &:focus-visible {
+        background: rgba(246, 141, 46, 0.14);
+        color: #fff;
+        padding-inline-start: 20px;
+        outline: none;
+      }
+    }
+  }
+  .hdr__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    @include down(1160px) {
+      margin-inline-start: auto;
+    }
+  }
+  .hdr__icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.85);
+    transition: background 0.3s;
+    @include focus-ring;
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    svg {
+      width: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+    }
+    kbd {
+      font: 600 0.68rem/1 var(--font-body);
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      @include down($bp-sm) {
+        display: none;
+      }
+    }
+  }
+  .hdr__lang {
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.85);
+    @include focus-ring;
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+  .hdr__cta {
+    padding: 0.85em 1.4em;
+    @include down($bp-sm) {
+      display: none;
+    }
+  }
+  .hdr__burger {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    @include down(1160px) {
+      display: block;
+    }
+    span {
+      position: absolute;
+      left: 13px;
+      right: 13px;
+      height: 2px;
+      border-radius: 2px;
+      background: #fff;
+      transition: transform 0.5s var(--ease-out), top 0.5s var(--ease-out);
+      &:first-child {
+        top: 17px;
+      }
+      &:last-child {
+        top: 25px;
+      }
+    }
+    &[aria-expanded='true'] span {
+      top: 21px;
+      &:first-child {
+        transform: rotate(45deg);
+      }
+      &:last-child {
+        transform: rotate(-45deg);
+      }
+    }
+  }
+
+  .mnav {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(120% 80% at 80% 0%, #004f59, #00262b 70%);
+    color: #fff;
+    clip-path: circle(0% at calc(100% - 50px) 46px);
+    transition: clip-path 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+    overflow-y: auto;
+    &.is-open {
+      clip-path: circle(150% at calc(100% - 50px) 46px);
+    }
+    :global([dir='rtl']) & {
+      clip-path: circle(0% at 50px 46px);
+      &.is-open {
+        clip-path: circle(150% at 50px 46px);
+      }
+    }
+  }
+  .mnav__inner {
+    padding: 120px var(--gutter) 40px;
+    > ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 18px;
+      > li {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s, transform 0.8s var(--ease-out);
+        transition-delay: calc(0.2s + var(--i) * 60ms);
+        .is-open & {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    }
+  }
+  .mnav__top {
+    font: 500 clamp(1.6rem, 6vw, 2.4rem) / 1.1 var(--font-display);
+  }
+  .mnav__sub {
+    list-style: none;
+    padding: 8px 0 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    a {
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.95rem;
+    }
+  }
+  .mnav__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 40px;
+  }
+  :global(html.no-scroll) {
+    overflow: hidden;
+  }
+</style>

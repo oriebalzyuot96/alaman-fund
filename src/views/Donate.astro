@@ -1,0 +1,166 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import DonateBuilder from '../islands/DonateBuilder';
+import ZakatCalc from '../islands/ZakatCalc';
+import Illo from '../components/Illo.astro';
+import { data, ui, href, type Lang } from '../lib/i18n';
+import { crumbs } from '../lib/crumbs';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const h2 = flat.filter((b) => b.t === 'h2');
+const after = (title?: string) => flat[flat.findIndex((b) => b.text === title) + 1]?.text;
+const payLogos = flat.filter((b) => b.t === 'img' && /\.svg$/.test(b.src!) && !/shield/.test(b.src!));
+const secure = h2[0]?.text;
+const fatwa = { title: h2[1]?.text, text: after(h2[1]?.text) };
+const sadaqah = { title: h2[2]?.text, text: after(h2[2]?.text) };
+const priceNote = flat.find((b) => b.t === 'p' && b.text!.startsWith('*'))?.text;
+const zakatTitle = flat.find((b) => b.t === 'h3' && /zak|زكا/i.test(b.text!))?.text;
+
+// Packages come from the Individual Donation price list (+ the two Kafaleh programs).
+const ind = data[lang].pages['ways-to-give/individual-donation'].sections.flat();
+const kafaleh = ind
+  .map((b, i) => {
+    const m = b.t === 'p' && b.text!.match(/^([\d,.]+)\s*(JOD|دينار أردني)/);
+    return m ? { name: ind[i - 1].text!, min: +m[1].replace(/,/g, ''), max: +m[1].replace(/,/g, ''), any: false, per: '' } : null;
+  })
+  .filter(Boolean);
+const items = ind.filter((b) => b.t === 'li').map((b) => {
+  const nums = (b.text!.match(/\d[\d,.]*/g) || []).map((n) => +n.replace(/,/g, ''));
+  const name = b.text!.replace(/\d[\d,.]*\s*(–|-)?\s*/g, '').replace(/(JOD|دينار أردني|دينار|دنانير)\s*/g, '').replace(/(per month|شهرياً|سنوياً|Any amount|أي مبلغ)/g, '').trim();
+  const per = /month|شهري/.test(b.text!) ? (lang === 'ar' ? '/ شهرياً' : '/ month') : '';
+  return { name, min: nums[0] || 0, max: nums[1] || nums[0] || 0, any: !nums.length, per };
+});
+const packages = [items[0], ...kafaleh, ...items.slice(1)].filter(Boolean) as { name: string; min: number; max: number; any: boolean; per: string }[];
+
+const zLabels = lang === 'ar'
+  ? { wealth: 'زكاة المال', gold: 'زكاة الذهب', silver: 'زكاة الفضة', crops: 'زكاة الزروع والثمار', stocks: 'زكاة الأسهم' }
+  : { wealth: 'Wealth', gold: 'Gold', silver: 'Silver', crops: 'Agricultural produce', stocks: 'Stocks' };
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={t.giveKicker} lead={t.giveTitle} crumbs={crumbs(lang, slug)} image="/media/2026/05/donate-.jpg" />
+
+  <section class="section dn">
+    <div class="container">
+      <DonateBuilder
+        client:visible
+        lang={lang}
+        packages={packages}
+        checkout="https://alamanfund.jo/ways-to-give/donate/"
+        t={lang === 'ar'
+          ? { choose: 'اختر الباقة', amount: 'المبلغ', once: 'مرة واحدة', monthly: 'شهرياً', summary: 'تبرعك', cta: 'المتابعة إلى الدفع الآمن', note: 'تتم معالجة الدفع عبر بوابة صندوق الأمان المشفّرة.', custom: 'مبلغ آخر', cur: 'دينار' }
+          : { choose: 'Choose a package', amount: 'Amount', once: 'One-time', monthly: 'Monthly', summary: 'Your gift', cta: 'Continue to secure payment', note: 'Payment is processed on Al Aman Fund’s encrypted checkout.', custom: 'Other amount', cur: 'JOD' }}
+      />
+      <div class="dn__secure" data-reveal>
+        <span class="dn__shield" aria-hidden="true">🔒</span>
+        <strong>{secure}</strong>
+        <div class="dn__logos">{payLogos.map((l) => <img src={l.src} alt="" loading="lazy" />)}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section dn-z" id="zakat">
+    <div class="container dn-z__grid">
+      <div class="dn-z__text">
+        <p class="kicker" data-reveal>{lang === 'ar' ? 'فتوى رقم 7/2010' : 'Fatwa No. 7/2010'}</p>
+        <h2 class="h2" data-reveal style="--d:1">{fatwa.title}</h2>
+        <p data-reveal style="--d:2">{fatwa.text}</p>
+        <div class="dn-z__illo" data-reveal style="--d:3"><Illo name="give" /></div>
+      </div>
+      <div>
+        <h3 class="dn-z__h" data-reveal>{zakatTitle}</h3>
+        <ZakatCalc client:visible lang={lang} labels={zLabels} donateHref={href(lang, 'ways-to-give/donate')} />
+        {priceNote && <p class="dn-z__note">{priceNote}</p>}
+      </div>
+    </div>
+  </section>
+
+  <section class="section dn-s">
+    <div class="container dn-s__box dark-surface" data-reveal>
+      <h2>{sadaqah.title}</h2>
+      <p>{sadaqah.text}</p>
+    </div>
+  </section>
+</Base>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .dn__secure {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 18px 24px;
+    border-radius: var(--radius);
+    background: var(--bg-2);
+    strong {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+    }
+  }
+  .dn__logos {
+    display: flex;
+    gap: 10px;
+    margin-inline-start: auto;
+    img {
+      height: 30px;
+      width: auto;
+    }
+  }
+  .dn-z {
+    background: var(--bg-2);
+  }
+  .dn-z__grid {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: clamp(30px, 5vw, 80px);
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .dn-z__text {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    p {
+      color: var(--text-2);
+    }
+  }
+  .dn-z__illo {
+    width: 180px;
+  }
+  .dn-z__h {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+  .dn-z__note {
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: var(--text-2);
+  }
+  .dn-s__box {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 14px;
+    padding: clamp(36px, 6vw, 80px);
+    border-radius: var(--radius-l);
+    background: radial-gradient(60% 120% at 100% 100%, rgba(246, 141, 46, 0.45), transparent 60%), $teal-900;
+    color: #fff;
+    h2 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+    }
+    p {
+      max-width: 60ch;
+      font-size: 1.15rem;
+      opacity: 0.85;
+    }
+  }
+</style>

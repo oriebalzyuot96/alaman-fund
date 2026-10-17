@@ -1,0 +1,44 @@
+---
+import { data, type Lang } from '../lib/i18n';
+import Home from '../views/Home.astro';
+import Generic from '../views/Generic.astro';
+import WhoWeAre from '../views/WhoWeAre.astro';
+import Programs from '../views/Programs.astro';
+import WaysToGive from '../views/WaysToGive.astro';
+import Hours from '../views/Hours.astro';
+import Digital from '../views/Digital.astro';
+import Apply from '../views/Apply.astro';
+import Donate from '../views/Donate.astro';
+import Contact from '../views/Contact.astro';
+import Reports from '../views/Reports.astro';
+import NewsList from '../views/NewsList.astro';
+import NewsPost from '../views/NewsPost.astro';
+
+export function getStaticPaths() {
+  const out: { params: { path: string | undefined }; props: { lang: Lang; slug: string; kind: 'page' | 'news' | 'post' } }[] = [];
+  for (const lang of ['en', 'ar'] as Lang[]) {
+    const pre = lang === 'ar' ? 'ar' : '';
+    const join = (s: string) => [pre, s].filter(Boolean).join('/') || undefined;
+    for (const slug of Object.keys(data[lang].pages)) out.push({ params: { path: join(slug) }, props: { lang, slug, kind: 'page' } });
+    out.push({ params: { path: join('news') }, props: { lang, slug: 'news', kind: 'news' } });
+    for (const p of data[lang].news) out.push({ params: { path: join(`news/${p.id}`) }, props: { lang, slug: p.id, kind: 'post' } });
+  }
+  return out;
+}
+
+const { lang, slug, kind } = Astro.props;
+const views: Record<string, any> = {
+  '': Home,
+  'who-we-are': WhoWeAre,
+  'who-we-are/our-programs': Programs,
+  'ways-to-give': WaysToGive,
+  'ways-to-give/employee-deduction-program': Hours,
+  'ways-to-give/digital-donation': Digital,
+  'ways-to-give/donate': Donate,
+  'application-portal': Apply,
+  'contact-us': Contact,
+  'who-we-are/reports-resources': Reports,
+};
+const View = kind === 'news' ? NewsList : kind === 'post' ? NewsPost : views[slug] || Generic;
+---
+<View lang={lang} slug={slug} />

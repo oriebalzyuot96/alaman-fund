@@ -1,0 +1,208 @@
+---
+import Base from '../layouts/Base.astro';
+import Blocks from '../components/Blocks.astro';
+import NewsCard from '../components/NewsCard.astro';
+import { data, ui, href, fmtDate, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const all = data[lang].news;
+const post = all.find((p) => p.id === slug)!;
+// drop the hero image from the body if it repeats
+const body = post.body.filter((b, i) => !(i < 3 && b.t === 'img' && b.src === post.image));
+const words = body.filter((b) => b.text).map((b) => b.text).join(' ').split(/\s+/).length;
+const mins = Math.max(1, Math.round(words / 200));
+const related = all.filter((p) => p.id !== post.id && p.category === post.category).slice(0, 3);
+const url = `https://alamanfund.jo${href(lang, `news/${post.id}`)}`;
+const share = [
+  { name: 'X', href: `https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}` },
+  { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}` },
+  { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}` },
+  { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(post.title + ' ' + url)}` },
+];
+---
+<Base lang={lang} title={post.title} description={post.excerpt} image={post.image}>
+  <article class="np">
+    <header class="np__hero">
+      <div class="container np__head">
+        <nav class="np__crumbs" aria-label="Breadcrumb">
+          <a href={href(lang, '')}>{t.home}</a><span>/</span><a href={href(lang, 'news')}>{lang === 'ar' ? 'الأخبار' : 'News'}</a>
+        </nav>
+        <span class:list={['np__tag', { 'np__tag--royal': post.category === 'royal' }]}>{post.category === 'royal' ? t.royal : t.news}</span>
+        <h1 class="np__title">{post.title}</h1>
+        <p class="np__meta"><time datetime={post.date}>{fmtDate(lang, post.date)}</time> · {mins} {lang === 'ar' ? 'دقائق قراءة' : 'min read'}</p>
+      </div>
+      {post.image && (
+        <figure class="container np__fig" data-reveal="clip">
+          <img src={post.image} alt="" />
+        </figure>
+      )}
+    </header>
+
+    <div class="container np__grid">
+      <aside class="np__share" aria-label={t.share}>
+        <span>{t.share}</span>
+        {share.map((s) => <a href={s.href} target="_blank" rel="noopener">{s.name}</a>)}
+        <button type="button" data-copy={url}>{lang === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button>
+      </aside>
+      <div class="np__body">
+        <Blocks blocks={body} lang={lang} />
+      </div>
+    </div>
+  </article>
+
+  {related.length > 0 && (
+    <section class="section np__rel">
+      <div class="container">
+        <h2 class="h2" data-reveal>{t.related}</h2>
+        <div class="np__relGrid">{related.map((p, i) => <NewsCard lang={lang} post={p} i={i} />)}</div>
+      </div>
+    </section>
+  )}
+</Base>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy!);
+        const old = b.textContent;
+        b.textContent = '✓';
+        setTimeout(() => (b.textContent = old), 1500);
+      } catch {}
+    }),
+  );
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .np__hero {
+    padding-top: calc(var(--header-h) + 70px);
+    background: linear-gradient($teal-900 0 62%, var(--bg) 62%);
+    color: #fff;
+  }
+  .np__head {
+    display: grid;
+    gap: 18px;
+    justify-items: start;
+    padding-bottom: 50px;
+    max-width: 980px;
+  }
+  .np__crumbs {
+    display: flex;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .np__tag {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .np__tag--royal {
+    background: $sun-500;
+  }
+  .np__title {
+    font-size: clamp(2rem, 4.4vw, 3.8rem);
+    line-height: 1.1;
+    animation: np-in 1.2s var(--ease-out) both;
+  }
+  @keyframes np-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+  .np__meta {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.92rem;
+  }
+  .np__fig {
+    margin-block: 0;
+    img {
+      width: 100%;
+      max-height: 640px;
+      object-fit: cover;
+      border-radius: var(--radius-l);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  .np__grid {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 760px);
+    justify-content: center;
+    gap: clamp(30px, 5vw, 70px);
+    padding-block: clamp(40px, 6vw, 80px);
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .np__share {
+    position: sticky;
+    top: 110px;
+    align-self: start;
+    display: grid;
+    gap: 8px;
+    span {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+    a,
+    button {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--line);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+      transition: border-color 0.3s, background 0.3s;
+      &:hover {
+        border-color: $sun-500;
+        background: rgba(246, 141, 46, 0.08);
+      }
+    }
+    @include down($bp-md) {
+      position: static;
+      order: 2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+  .np__body :global(.b-p) {
+    font-size: 1.15rem;
+    line-height: 1.8;
+  }
+  .np__body :global(.b-p:first-child)::first-letter {
+    float: inline-start;
+    font: 400 3.8em/0.85 var(--font-display);
+    color: $sun-500;
+    margin: 0.05em 0.12em 0 0;
+  }
+  :global([dir='rtl']) .np__body :global(.b-p:first-child)::first-letter {
+    float: none;
+    font: inherit;
+    color: inherit;
+    margin: 0;
+  }
+  .np__rel {
+    background: var(--bg-2);
+  }
+  .np__relGrid {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

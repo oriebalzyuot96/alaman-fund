@@ -1,0 +1,168 @@
+---
+import { ui, href, type Lang } from '../lib/i18n';
+interface Props { lang: Lang; title: string; kicker?: string; lead?: string; image?: string; crumbs?: { label: string; href: string }[] }
+const { lang, title, kicker, lead, image, crumbs = [] } = Astro.props;
+const t = ui[lang];
+const words = title.split(' ');
+---
+<section class="ph">
+  <div class="ph__bg" aria-hidden="true">
+    {image && <img src={image} alt="" />}
+    <svg class="ph__ribbon" viewBox="0 0 1440 400" preserveAspectRatio="none">
+      <path d="M0 300 C 300 200, 520 380, 820 290 S 1260 180, 1440 250 L1440 400 L0 400 Z" />
+      <path class="ph__line" d="M0 270 C 300 170, 520 350, 820 260 S 1260 150, 1440 220" />
+    </svg>
+    <div class="ph__sun"></div>
+  </div>
+  <div class="container ph__in">
+    <nav class="ph__crumbs" aria-label="Breadcrumb">
+      <a href={href(lang, '')}>{t.home}</a>
+      {crumbs.map((c) => <><span>/</span><a href={c.href}>{c.label}</a></>)}
+    </nav>
+    {kicker && <p class="kicker ph__kicker">{kicker}</p>}
+    <h1 class="display ph__title">
+      {words.map((w, i) => <span class="ph__w"><span style={`--i:${i}`}>{w}</span></span>)}
+    </h1>
+    {lead && <p class="lead ph__lead">{lead}</p>}
+    <slot />
+  </div>
+</section>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+
+  .ph {
+    position: relative;
+    min-height: clamp(440px, 62vh, 640px);
+    display: flex;
+    align-items: flex-end;
+    padding: calc(var(--header-h) + 80px) 0 clamp(70px, 9vw, 120px);
+    background: radial-gradient(120% 120% at 85% 0%, var(--teal-700), var(--teal-900) 55%, var(--teal-950));
+    color: #fff;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .ph__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.28;
+      mix-blend-mode: luminosity;
+      transform: scale(1.08);
+      animation: ph-zoom 14s ease-out forwards;
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(0, 38, 43, 0.92) 20%, rgba(0, 38, 43, 0.3));
+    }
+    :global([dir='rtl']) &::after {
+      background: linear-gradient(-90deg, rgba(0, 38, 43, 0.92) 20%, rgba(0, 38, 43, 0.3));
+    }
+  }
+  @keyframes ph-zoom {
+    to {
+      transform: scale(1);
+    }
+  }
+  .ph__sun {
+    position: absolute;
+    z-index: 1;
+    width: clamp(160px, 22vw, 320px);
+    aspect-ratio: 1;
+    inset-inline-end: 9vw;
+    top: 26%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, var(--sun-300), var(--sun-500) 55%, var(--sun-600));
+    box-shadow: 0 0 120px 30px rgba(246, 141, 46, 0.35);
+    animation: ph-rise 1.8s var(--ease-out) both 0.3s;
+    @include down(900px) {
+      opacity: 0.5;
+      top: 18%;
+    }
+  }
+  @keyframes ph-rise {
+    from {
+      transform: translateY(140px);
+      opacity: 0;
+    }
+  }
+  .ph__ribbon {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 42%;
+    path {
+      fill: var(--bg);
+    }
+    .ph__line {
+      fill: none;
+      stroke: var(--sun-500);
+      stroke-width: 2;
+      stroke-dasharray: 2200;
+      stroke-dashoffset: 2200;
+      animation: ph-draw 2.6s var(--ease-out) forwards 0.6s;
+    }
+  }
+  @keyframes ph-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .ph__in {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    gap: 22px;
+  }
+  .ph__crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    a:hover {
+      color: var(--sun-300);
+    }
+  }
+  .ph__kicker {
+    color: var(--sun-300);
+  }
+  .ph__title {
+    max-width: 16ch;
+    color: #fff;
+  }
+  .ph__w {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    padding-bottom: 0.08em;
+    margin-inline-end: 0.22em;
+    > span {
+      display: inline-block;
+      animation: ph-word 1.1s var(--ease-out) both;
+      animation-delay: calc(0.15s + var(--i) * 70ms);
+    }
+  }
+  @keyframes ph-word {
+    from {
+      transform: translateY(110%);
+    }
+  }
+  .ph__lead {
+    color: rgba(255, 255, 255, 0.78);
+  }
+  // hold the intro until the loader lifts
+  :global(html.loader-on) .ph :is(.ph__w > span, .ph__sun, .ph__line, img) {
+    animation-play-state: paused;
+  }
+</style>

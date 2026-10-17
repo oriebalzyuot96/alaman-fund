@@ -1,0 +1,214 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { data, ui, socials, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const h3 = flat.filter((b) => b.t === 'h3').map((b) => b.text!);
+const h4 = flat.filter((b) => b.t === 'h4').map((b) => b.text!);
+const maps = flat.filter((b) => b.t === 'iframe').map((b) => b.src!);
+// paragraphs come in [name, address] pairs, one per map
+const ps = flat.filter((b) => b.t === 'p').map((b) => b.text!);
+const locations = maps.map((src, i) => ({ name: ps[i * 2], address: ps[i * 2 + 1], src }));
+const phone = h3[0];
+const email = h3[1];
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={t.contact} lead={t.footerTag} />
+
+  <section class="section ct">
+    <div class="container">
+      <div class="ct__cards">
+        <a class="ct__card" href="tel:+96265330500" data-reveal data-tilt>
+          <span class="ct__ico" aria-hidden="true">☎</span>
+          <small>{h4[0]}</small>
+          <strong dir="ltr">{phone}</strong>
+        </a>
+        <a class="ct__card" href={`mailto:${email}`} data-reveal data-tilt style="--d:1">
+          <span class="ct__ico" aria-hidden="true">✉</span>
+          <small>{h4[1]}</small>
+          <strong>{email}</strong>
+        </a>
+        <div class="ct__card ct__card--social" data-reveal style="--d:2">
+          <span class="ct__ico" aria-hidden="true">✦</span>
+          <small>{h4[2]}</small>
+          <div class="ct__soc">{socials.map((s) => <a href={s.href} target="_blank" rel="noopener">{s.name}</a>)}</div>
+        </div>
+      </div>
+
+      <div class="ct__locs">
+        <h2 class="h2" data-reveal>{h3[2]}</h2>
+        <div class="ct__tabs" role="tablist">
+          {locations.map((l, i) => (
+            <button role="tab" type="button" class:list={['ct__tab', { 'is-on': i === 0 }]} data-loc={i} aria-selected={i === 0 ? 'true' : 'false'}>
+              <span class="ct__pin" aria-hidden="true"></span>
+              <span><strong>{l.name}</strong><small>{l.address}</small></span>
+            </button>
+          ))}
+        </div>
+        <div class="ct__map" data-reveal>
+          {locations.map((l, i) => <iframe class:list={{ 'is-on': i === 0 }} data-map={i} src={i === 0 ? l.src : undefined} data-src={l.src} loading="lazy" title={l.name} referrerpolicy="no-referrer-when-downgrade"></iframe>)}
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.ct__tab');
+  const frames = document.querySelectorAll<HTMLIFrameElement>('[data-map]');
+  tabs.forEach((tab) =>
+    tab.addEventListener('click', () => {
+      tabs.forEach((x) => (x.classList.toggle('is-on', x === tab), x.setAttribute('aria-selected', String(x === tab))));
+      frames.forEach((f) => {
+        const on = f.dataset.map === tab.dataset.loc;
+        if (on && !f.src) f.src = f.dataset.src!;
+        f.classList.toggle('is-on', on);
+      });
+    }),
+  );
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .ct__cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ct__card {
+    display: grid;
+    gap: 8px;
+    padding: 30px;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
+    small {
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      color: var(--text-2);
+    }
+    strong {
+      font: 400 clamp(1.3rem, 2vw, 1.7rem) / 1.2 var(--font-display);
+      word-break: break-word;
+    }
+  }
+  .ct__ico {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+    background: $sun-500;
+    color: #fff;
+    font-size: 1.3rem;
+  }
+  .ct__soc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    a {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-2);
+      font-size: 0.82rem;
+      font-weight: 700;
+      &:hover {
+        background: $teal-800;
+        color: #fff;
+      }
+    }
+  }
+  .ct__locs {
+    margin-top: clamp(50px, 7vw, 90px);
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px 40px;
+    h2 {
+      grid-column: 1;
+    }
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .ct__tabs {
+    grid-column: 1;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .ct__tab {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    text-align: start;
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    transition: border-color 0.3s;
+    span:last-child {
+      display: grid;
+      gap: 4px;
+    }
+    small {
+      color: var(--text-2);
+    }
+    &:global(.is-on) {
+      border-color: $sun-500;
+    }
+  }
+  .ct__pin {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: 5px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: $sun-500;
+    box-shadow: 0 0 0 5px rgba(246, 141, 46, 0.18);
+  }
+  .ct__map {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: relative;
+    min-height: 460px;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    box-shadow: var(--shadow-lift);
+    @include down($bp-md) {
+      grid-column: 1;
+      grid-row: auto;
+    }
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      opacity: 0;
+      transition: opacity 0.5s;
+      &:global(.is-on) {
+        opacity: 1;
+        z-index: 1;
+      }
+    }
+  }
+</style>

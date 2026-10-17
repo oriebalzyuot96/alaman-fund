@@ -1,0 +1,254 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Illo from '../components/Illo.astro';
+import { data, ui, href, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const [storyS = [], vmS = [], gaS = [], teamS = [], eligS = []] = page.sections;
+const story = storyS.filter((b) => b.t === 'p').flatMap((b) => b.text!.split(/(?<=[.؟!])\s+(?=[A-Z؀-ۿ“"])/));
+// sentence 0 is the hero lead; regroup the rest into readable paragraphs of ~3 sentences
+const paras: string[] = [];
+for (let i = 1; i < story.length; i += 3) paras.push(story.slice(i, i + 3).join(' '));
+const vm = vmS.map((b, i) => (b.t === 'h3' ? { title: b.text!, text: vmS[i + 1]?.text } : null)).filter(Boolean) as { title: string; text: string }[];
+const ga = { title: gaS.find((b) => b.t === 'h2')?.text, href: gaS.find((b) => b.t === 'a')?.href, img: gaS.find((b) => b.t === 'img')?.src };
+const team = { title: teamS.find((b) => b.t === 'h2')?.text, href: teamS.find((b) => b.t === 'a')?.href };
+const elig = eligS.filter((b) => b.t === 'p').map((b) => b.text!);
+const people = data[lang].pages['who-we-are/management-team'].sections.flat().filter((b) => b.t === 'h5' && b.sub).slice(0, 6);
+---
+<Base lang={lang} title={page.title} description={story[0]}>
+  <PageHero lang={lang} title={page.title} kicker={lang === 'ar' ? 'قصتنا' : 'Our story'} lead={story[0]} image="/media/2026/05/graduates-.jpg" />
+
+  <section class="section wwa">
+    <div class="container wwa__grid">
+      <aside class="wwa__aside">
+        <p class="kicker" data-reveal>{lang === 'ar' ? 'منذ 2006' : 'Since 2006'}</p>
+        <p class="wwa__quote" data-reveal style="--d:1">
+          {lang === 'ar' ? '«الأمان» تعني الأمن والطمأنينة — وهي رسالتنا.' : '“Al Aman” means safety and security — and that is our mission.'}
+        </p>
+        <div class="wwa__illo" data-reveal style="--d:2"><Illo name="care" /></div>
+      </aside>
+      <div class="wwa__story">
+        {paras.map((p, i) => <p data-reveal style={`--d:${i % 3}`} class:list={{ 'wwa__first': i === 0 }}>{p}</p>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section vm dark-surface">
+    <div class="container vm__grid">
+      {vm.map((v, i) => (
+        <article class:list={['vm__card', `vm__card--${i}`]} data-reveal data-tilt style={`--d:${i}`}>
+          <span class="vm__icon" aria-hidden="true">{i === 0 ? '◐' : '✦'}</span>
+          <h2>{v.title}</h2>
+          <p>{v.text}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section gov">
+    <div class="container gov__grid">
+      <a class="gov__card gov__card--ga" href={ga.href} data-reveal data-tilt>
+        {ga.img && <img src={ga.img} alt="" loading="lazy" />}
+        <div>
+          <p class="kicker">{lang === 'ar' ? 'الحوكمة' : 'Governance'}</p>
+          <h2>{ga.title}</h2>
+          <span class="link-arrow">{t.learnMore} →</span>
+        </div>
+      </a>
+      <a class="gov__card gov__card--team" href={team.href} data-reveal data-tilt style="--d:1">
+        <div class="gov__avatars" aria-hidden="true">
+          {people.map((p) => <span>{p.text!.replace(/^(Eng\.|م\.)\s*/, '').split(' ').slice(0, 2).map((w) => w[0]).join('')}</span>)}
+        </div>
+        <div>
+          <p class="kicker">{lang === 'ar' ? 'فريقنا' : 'Our team'}</p>
+          <h2>{team.title}</h2>
+          <span class="link-arrow">{t.learnMore} →</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="section elig">
+    <div class="container elig__box" data-reveal>
+      <div class="elig__illo"><Illo name="apply" /></div>
+      <div class="elig__text">
+        <h2 class="h2">{lang === 'ar' ? 'من نخدم' : 'Who we serve'}</h2>
+        {elig.map((p) => <p>{p}</p>)}
+        <a class="btn" href={href(lang, 'application-portal')}>{t.apply}</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .wwa__grid {
+    display: grid;
+    grid-template-columns: 0.75fr 1.25fr;
+    gap: clamp(30px, 6vw, 100px);
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .wwa__aside {
+    position: sticky;
+    top: 120px;
+    align-self: start;
+    display: grid;
+    gap: 20px;
+    @include down($bp-md) {
+      position: static;
+    }
+  }
+  .wwa__quote {
+    font: 400 clamp(1.6rem, 2.6vw, 2.3rem) / 1.25 var(--font-display);
+    color: var(--brand);
+  }
+  .wwa__illo {
+    width: 200px;
+  }
+  .wwa__story {
+    display: grid;
+    gap: 1.4em;
+    font-size: 1.12rem;
+    color: var(--text);
+  }
+  .wwa__first::first-letter {
+    float: inline-start;
+    font: 400 4.6em/0.8 var(--font-display);
+    color: $sun-500;
+    margin: 0.06em 0.12em 0 0;
+  }
+  :global([dir='rtl']) .wwa__first::first-letter {
+    float: none;
+    font: inherit;
+    color: inherit;
+    margin: 0;
+  }
+
+  .vm {
+    padding-block: clamp(40px, 6vw, 80px);
+  }
+  .vm__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .vm__card {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 16px;
+    padding: clamp(32px, 4vw, 56px);
+    border-radius: var(--radius-l);
+    color: #fff;
+    min-height: 320px;
+    align-content: end;
+    transition: transform 0.4s var(--ease-out);
+    h2 {
+      font-size: clamp(2rem, 3.4vw, 3rem);
+    }
+    p {
+      font: 400 clamp(1.1rem, 1.6vw, 1.35rem) / 1.5 var(--font-body);
+      opacity: 0.88;
+      max-width: 34ch;
+    }
+  }
+  .vm__card--0 {
+    background: radial-gradient(90% 90% at 100% 0%, $teal-500, $teal-800 55%, $teal-900);
+  }
+  .vm__card--1 {
+    background: radial-gradient(90% 90% at 100% 0%, $sun-300, $sun-500 50%, $sun-600);
+  }
+  .vm__icon {
+    position: absolute;
+    top: 28px;
+    inset-inline-end: 34px;
+    font-size: 4rem;
+    opacity: 0.25;
+  }
+
+  .gov__grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .gov__card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: end;
+    padding: 30px;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
+    img {
+      width: 160px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: var(--radius);
+    }
+    h2 {
+      font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+      margin: 10px 0 16px;
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .gov__avatars {
+    display: grid;
+    grid-template-columns: repeat(3, 52px);
+    gap: 8px;
+    span {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, $teal-500, $teal-800);
+      color: #fff;
+      font: 500 1rem/1 var(--font-display);
+      &:nth-child(3n + 2) {
+        background: radial-gradient(circle at 35% 30%, $sun-300, $sun-500);
+      }
+    }
+  }
+
+  .elig__box {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: clamp(24px, 4vw, 60px);
+    align-items: center;
+    padding: clamp(30px, 5vw, 64px);
+    border-radius: var(--radius-l);
+    background: var(--bg-2);
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .elig__text {
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+    p {
+      color: var(--text-2);
+    }
+  }
+</style>

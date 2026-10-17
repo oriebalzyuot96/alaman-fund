@@ -1,0 +1,152 @@
+---
+// Line illustrations in the Al Aman style: teal strokes, a sun-orange accent shape, soft sand blob.
+interface Props { name: 'education' | 'living' | 'capacity' | 'psycho' | 'inclusion' | 'care' | 'job' | 'give' | 'apply'; class?: string }
+const { name, class: cls } = Astro.props;
+---
+<svg class:list={['illo', cls]} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+  <circle class="illo__blob" cx="104" cy="108" r="78" />
+  {name === 'education' && (
+    <g>
+      <circle class="illo__sun" cx="148" cy="54" r="20" />
+      <path class="illo__s" d="M40 92 100 64l60 28-60 28Z" />
+      <path class="illo__s" d="M62 102v30c0 10 17 20 38 20s38-10 38-20v-30" />
+      <path class="illo__s" d="M160 92v40" /><circle class="illo__dot" cx="160" cy="138" r="6" />
+      <path class="illo__s illo__thin" d="M72 160h56M80 172h40" />
+    </g>
+  )}
+  {name === 'living' && (
+    <g>
+      <circle class="illo__sun" cx="140" cy="62" r="24" />
+      <path class="illo__s" d="M46 104 100 60l54 44" />
+      <path class="illo__s" d="M60 94v62h80V94" />
+      <rect class="illo__fill" x="88" y="118" width="24" height="38" rx="3" />
+      <path class="illo__s" d="M88 156v-38h24v38" />
+      <path class="illo__s illo__thin" d="M70 112h12v12H70zM118 112h12v12h-12z" />
+      <path class="illo__s illo__thin" d="M36 156h128" />
+    </g>
+  )}
+  {name === 'capacity' && (
+    <g>
+      <circle class="illo__sun" cx="148" cy="50" r="18" />
+      <path class="illo__s" d="M40 160h30v-28h30v-28h30V76h30" />
+      <path class="illo__s illo__thin" d="M40 160h124" />
+      <circle class="illo__dot" cx="145" cy="64" r="7" />
+      <path class="illo__s" d="M145 71v16m-8-10 8-6 8 6" />
+      <path class="illo__s illo__thin" d="M52 150v-8M82 122v-8M112 94v-8" />
+    </g>
+  )}
+  {name === 'psycho' && (
+    <g>
+      <path class="illo__sun" d="M100 136s-34-20-34-44a18 18 0 0 1 34-8 18 18 0 0 1 34 8c0 24-34 44-34 44Z" />
+      <path class="illo__s" d="M36 120c18 0 30 8 40 22l16 18h42" />
+      <path class="illo__s" d="M164 120c-18 0-30 8-40 22" />
+      <path class="illo__s illo__thin" d="M100 44v-12M70 52l-8-8M130 52l8-8" />
+    </g>
+  )}
+  {name === 'inclusion' && (
+    <g>
+      <circle class="illo__sun" cx="100" cy="98" r="16" />
+      <circle class="illo__s" cx="56" cy="72" r="12" /><circle class="illo__s" cx="144" cy="72" r="12" />
+      <circle class="illo__s" cx="56" cy="138" r="12" /><circle class="illo__s" cx="144" cy="138" r="12" />
+      <path class="illo__s illo__thin" d="M66 80l22 12M134 80l-22 12M66 130l22-14M134 130l-22-14" />
+      <path class="illo__s" d="M42 172c4-12 24-12 28 0M130 172c4-12 24-12 28 0" />
+    </g>
+  )}
+  {name === 'care' && (
+    <g>
+      <path class="illo__s" d="M50 156V88l50-34 50 34v68" />
+      <circle class="illo__sun" cx="100" cy="104" r="16" />
+      <path class="illo__s" d="M150 120h22m-8-8 8 8-8 8" />
+      <path class="illo__s illo__thin" d="M36 156h128" />
+    </g>
+  )}
+  {name === 'job' && (
+    <g>
+      <rect class="illo__s" x="48" y="82" width="104" height="70" rx="10" />
+      <path class="illo__s" d="M82 82v-12a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v12" />
+      <path class="illo__s illo__thin" d="M48 112h104" />
+      <circle class="illo__sun" cx="100" cy="112" r="11" />
+      <path class="illo__s illo__thin" d="M150 50l6-12 6 12 12 6-12 6-6 12-6-12-12-6Z" />
+    </g>
+  )}
+  {name === 'give' && (
+    <g>
+      <circle class="illo__sun" cx="100" cy="72" r="24" />
+      <path class="illo__s" d="M40 136c16-4 30-14 46-14h26a10 10 0 0 1 0 20H92" />
+      <path class="illo__s" d="M112 142l34-14a10 10 0 0 1 10 17l-38 22c-14 6-30 6-44 0l-34-12" />
+    </g>
+  )}
+  {name === 'apply' && (
+    <g>
+      <rect class="illo__s" x="60" y="46" width="80" height="108" rx="10" />
+      <path class="illo__s illo__thin" d="M76 76h48M76 92h48M76 108h30" />
+      <circle class="illo__sun" cx="132" cy="140" r="20" />
+      <path class="illo__white" d="M123 140l6 6 12-12" />
+    </g>
+  )}
+</svg>
+
+<style lang="scss">
+  .illo {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .illo__blob {
+    fill: var(--sun-100);
+    opacity: 0.6;
+  }
+  :global(.dark-surface) .illo__blob {
+    fill: rgba(255, 255, 255, 0.06);
+    opacity: 1;
+  }
+  .illo__s {
+    stroke: var(--teal-800);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    stroke-dasharray: 420;
+    stroke-dashoffset: 420;
+    transition: stroke-dashoffset 1.8s var(--ease-out);
+  }
+  :global(.dark-surface) .illo__s {
+    stroke: #fff;
+  }
+  .illo__thin {
+    stroke-width: 2.5;
+    opacity: 0.7;
+  }
+  .illo__sun {
+    fill: var(--sun-500);
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    transition: transform 1s var(--ease-out) 0.4s;
+  }
+  .illo__dot,
+  .illo__fill {
+    fill: var(--sun-300);
+  }
+  .illo__white {
+    stroke: #fff;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  :global(.is-in) .illo__s,
+  :global(.is-in).illo .illo__s {
+    stroke-dashoffset: 0;
+  }
+  :global(.is-in) .illo__sun {
+    transform: scale(1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .illo__s {
+      stroke-dashoffset: 0;
+    }
+    .illo__sun {
+      transform: none;
+    }
+  }
+</style>

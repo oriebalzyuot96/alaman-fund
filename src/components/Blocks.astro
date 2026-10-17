@@ -1,0 +1,324 @@
+---
+import { group } from '../lib/blocks';
+import type { Block, Lang } from '../lib/i18n';
+import { ui } from '../lib/i18n';
+import Video from './Video.astro';
+
+interface Props { blocks: Block[]; lang: Lang }
+const { blocks, lang } = Astro.props;
+const t = ui[lang];
+const groups = group(blocks);
+const initials = (n: string) => n.replace(/^(H\.E\.|Eng\.|Dr\.|Mr\.|Ms\.|His Eminence|Sheikh|م\.|د\.|السيد|السيدة|معالي|سماحة|الشيخ|عطوفة)\s*/g, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('');
+---
+<div class="blocks">
+  {groups.map((g, i) => {
+    switch (g.k) {
+      case 'heading':
+        return g.level > 2 ? <h3 class="b-h b-h3" data-reveal>{g.text}</h3> : <h2 class="b-h b-h2" data-reveal>{g.text}</h2>;
+      case 'text':
+        return <p class="b-p" data-reveal>{g.text}</p>;
+      case 'list':
+        return <ul class="b-list" data-reveal>{g.items.map((it) => <li>{it}</li>)}</ul>;
+      case 'image':
+        return <figure class="b-img" data-reveal="clip"><img src={g.src} alt={g.alt} loading="lazy" /></figure>;
+      case 'gallery':
+        return (
+          <div class="b-gallery">
+            {g.items.map((src, k) => (
+              <a href={src} class="b-gallery__it" data-reveal style={`--d:${k % 4}`} target="_blank" rel="noopener">
+                <img src={src} alt="" loading="lazy" />
+              </a>
+            ))}
+          </div>
+        );
+      case 'figures':
+        return (
+          <div class:list={['b-figs', { 'b-figs--logos': g.logos }]}>
+            {g.items.map((f, k) => (
+              <figure class="b-fig" data-reveal data-tilt style={`--d:${k % 5}`}>
+                <div class="b-fig__media"><img src={f.src} alt={f.caption} loading="lazy" /></div>
+                {f.caption && !g.logos && <figcaption>{f.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        );
+      case 'people':
+        return (
+          <div class="b-people">
+            {g.items.map((p, k) => (
+              <article class="b-person" data-reveal data-tilt style={`--d:${k % 4}`}>
+                <span class="b-person__av" aria-hidden="true">{initials(p.name)}</span>
+                <h3>{p.name}</h3>
+                {p.role && <p>{p.role}</p>}
+              </article>
+            ))}
+          </div>
+        );
+      case 'stats':
+        return (
+          <div class="b-stats">
+            {g.items.map((s) => {
+              const n = parseInt(s.value);
+              return (
+                <div class="b-stat" data-reveal>
+                  <strong>{isNaN(n) ? s.value : <><span data-count={n}>0</span>{s.value.replace(/[\d,]/g, '')}</>}</strong>
+                  <span>{s.text}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      case 'video':
+        return <div class="b-video"><Video id={g.id} poster={g.poster} title={blocks.find((b) => b.t === 'h1' || b.t === 'h2')?.text} label={t.watch} /></div>;
+      case 'map':
+        return <iframe class="b-map" src={g.src} loading="lazy" title="Map" referrerpolicy="no-referrer-when-downgrade" data-reveal></iframe>;
+      case 'actions':
+        return (
+          <div class="b-actions" data-reveal>
+            {g.items.map((a) => (
+              <a class:list={['btn', { 'btn--teal': a.file }]} href={a.href} target={a.href.startsWith('http') || a.file ? '_blank' : undefined} rel="noopener">
+                {a.file && <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m-3.5-3.5L8 10l3.5-3.5M3 13h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>}
+                {a.text.replace(/[→←]/g, '').trim()}
+              </a>
+            ))}
+          </div>
+        );
+      case 'table':
+        return (
+          <div class="b-table" data-reveal>
+            <table>
+              {g.rows.map((r, k) => <tr>{r.map((c) => (k === 0 ? <th>{c}</th> : <td>{c}</td>))}</tr>)}
+            </table>
+          </div>
+        );
+    }
+  })}
+</div>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+
+  .blocks {
+    display: grid;
+    gap: 22px;
+    > * {
+      max-width: 100%;
+    }
+  }
+  .b-h {
+    color: var(--brand);
+    margin-top: 28px;
+    :global(:root[data-theme='dark']) & {
+      color: var(--sun-300);
+    }
+    @media (prefers-color-scheme: dark) {
+      :global(:root:not([data-theme='light'])) & {
+        color: var(--sun-300);
+      }
+    }
+  }
+  .b-h2 {
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+  }
+  .b-h3 {
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+  }
+  .b-p {
+    max-width: 75ch;
+    font-size: 1.08rem;
+    color: var(--text);
+  }
+  .b-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+    li {
+      position: relative;
+      padding: 16px 18px 16px 46px;
+      border-radius: var(--radius-s);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      &::before {
+        content: '';
+        position: absolute;
+        inset-inline-start: 18px;
+        top: 23px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, var(--sun-300), var(--sun-500));
+      }
+    }
+    :global([dir='rtl']) & li {
+      padding: 16px 46px 16px 18px;
+    }
+  }
+  .b-img img {
+    width: 100%;
+    border-radius: var(--radius);
+    max-height: 640px;
+    object-fit: cover;
+  }
+  .b-img {
+    margin: 0;
+  }
+  .b-gallery {
+    columns: 3 260px;
+    column-gap: 14px;
+  }
+  .b-gallery__it {
+    display: block;
+    margin-bottom: 14px;
+    break-inside: avoid;
+    border-radius: var(--radius);
+    overflow: hidden;
+    img {
+      width: 100%;
+      transition: transform 1.2s var(--ease-out);
+    }
+    &:hover img {
+      transform: scale(1.06);
+    }
+  }
+  .b-figs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
+  .b-figs--logos {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+    .b-fig__media {
+      aspect-ratio: 3 / 2;
+      padding: 22px;
+      background: #fff;
+      img {
+        object-fit: contain;
+        filter: grayscale(1) contrast(0.9);
+        opacity: 0.8;
+        transition: filter 0.5s, opacity 0.5s, transform 0.6s var(--ease-out);
+      }
+    }
+    .b-fig:hover img {
+      filter: none;
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+  .b-fig {
+    margin: 0;
+    display: grid;
+    gap: 12px;
+    transition: transform 0.4s var(--ease-out);
+    figcaption {
+      font-weight: 600;
+    }
+  }
+  .b-fig__media {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  .b-people {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .b-person {
+    position: relative;
+    padding: 28px 24px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(400px circle at var(--gx, 50%) var(--gy, 50%), rgba(246, 141, 46, 0.12), transparent 50%);
+      pointer-events: none;
+    }
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
+    h3 {
+      font-size: 1.18rem;
+      margin: 18px 0 6px;
+    }
+    p {
+      color: var(--text-2);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+  }
+  .b-person__av {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--teal-500), var(--teal-800));
+    color: #fff;
+    font: 500 1.3rem/1 var(--font-display);
+    box-shadow: 0 0 0 5px rgba(246, 141, 46, 0.15);
+  }
+  .b-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .b-stat {
+    padding: 24px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    gap: 6px;
+    strong {
+      font: 500 2.4rem/1 var(--font-display);
+      color: var(--sun-600);
+    }
+  }
+  .b-video {
+    margin-block: 20px;
+  }
+  .b-map {
+    width: 100%;
+    height: 380px;
+    border: 0;
+    border-radius: var(--radius);
+    filter: grayscale(0.3);
+  }
+  .b-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .b-table {
+    overflow-x: auto;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: start;
+    }
+    th {
+      color: var(--brand);
+    }
+  }
+</style>

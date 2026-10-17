@@ -1,0 +1,160 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import NewsCard from '../components/NewsCard.astro';
+import { data, ui, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; slug: string }
+const { lang } = Astro.props;
+const t = ui[lang];
+const posts = data[lang].news;
+const title = lang === 'ar' ? 'الإعلام والأخبار' : 'News & Releases';
+const years = [...new Set(posts.map((p) => p.date.slice(0, 4)))].filter(Boolean);
+---
+<Base lang={lang} title={title}>
+  <PageHero lang={lang} title={title} kicker={t.newsKicker} lead={posts[0]?.title} image={posts[0]?.image} />
+  <section class="section nl">
+    <div class="container">
+      <div class="nl__bar" data-reveal>
+        <div class="nl__chips" role="tablist">
+          <button type="button" class="is-on" data-f="all">{t.all} <span>{posts.length}</span></button>
+          <button type="button" data-f="news">{t.news} <span>{posts.filter((p) => p.category === 'news').length}</span></button>
+          <button type="button" data-f="royal">{t.royal} <span>{posts.filter((p) => p.category === 'royal').length}</span></button>
+        </div>
+        <select class="nl__year" aria-label="Year">
+          <option value="">{lang === 'ar' ? 'كل السنوات' : 'All years'}</option>
+          {years.map((y) => <option>{y}</option>)}
+        </select>
+        <button type="button" class="nl__search" data-open-search>
+          <svg viewBox="0 0 24 24" width="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2" /><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          {t.search}
+        </button>
+      </div>
+      <div class="nl__grid">
+        {posts.map((p, i) => (
+          <div class="nl__item" data-cat={p.category} data-year={p.date.slice(0, 4)}>
+            <NewsCard lang={lang} post={p} big={i === 0} i={i} />
+          </div>
+        ))}
+      </div>
+      <p class="nl__empty" hidden>{t.noResults}</p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('.nl__chips button');
+  const year = document.querySelector<HTMLSelectElement>('.nl__year')!;
+  const items = document.querySelectorAll<HTMLElement>('.nl__item');
+  const empty = document.querySelector<HTMLElement>('.nl__empty')!;
+  let cat = 'all';
+  const apply = () => {
+    let n = 0;
+    items.forEach((el) => {
+      const show = (cat === 'all' || el.dataset.cat === cat) && (!year.value || el.dataset.year === year.value);
+      el.hidden = !show;
+      if (show) {
+        n++;
+        el.querySelector('[data-reveal]')?.classList.add('is-in');
+      }
+    });
+    empty.hidden = n > 0;
+  };
+  chips.forEach((c) =>
+    c.addEventListener('click', () => {
+      chips.forEach((x) => x.classList.toggle('is-on', x === c));
+      cat = c.dataset.f!;
+      apply();
+    }),
+  );
+  year.addEventListener('change', apply);
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .nl__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 36px;
+  }
+  .nl__chips {
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 999px;
+    background: var(--bg-2);
+    button {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-2);
+      transition: background 0.3s, color 0.3s;
+      span {
+        font-size: 0.72rem;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: var(--line);
+      }
+      &:global(.is-on) {
+        background: $teal-800;
+        color: #fff;
+        span {
+          background: $sun-500;
+        }
+      }
+    }
+  }
+  .nl__year {
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font: 600 0.9rem var(--font-body);
+  }
+  .nl__search {
+    margin-inline-start: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    font-weight: 700;
+    font-size: 0.9rem;
+    &:hover {
+      border-color: $sun-500;
+    }
+  }
+  .nl__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    > :first-child:not([hidden]) {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+    @include down($bp-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+      > :first-child {
+        grid-column: auto !important;
+      }
+    }
+  }
+  .nl__empty {
+    padding: 60px;
+    text-align: center;
+    color: var(--text-2);
+  }
+</style>

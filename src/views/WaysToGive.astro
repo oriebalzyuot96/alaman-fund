@@ -1,0 +1,146 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { data, ui, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const cards: { img?: string; title: string; text?: string; cta?: string; href?: string }[] = [];
+flat.forEach((b, i) => {
+  if (b.t !== 'h2') return;
+  const img = flat[i - 1]?.t === 'img' ? flat[i - 1].src : undefined;
+  const text = flat[i + 1]?.t === 'p' ? flat[i + 1].text : undefined;
+  const a = flat.slice(i + 1, i + 4).find((x) => x.t === 'a');
+  cards.push({ img, title: b.text!, text, cta: a?.text?.replace(/[→←]/g, '').trim(), href: a?.href });
+});
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={t.giveKicker} lead={t.giveTitle} image={cards[0]?.img} />
+  <section class="section wtg">
+    <div class="container wtg__grid">
+      {cards.map((c, i) => (
+        <a class:list={['wtg__card', `wtg__card--${i}`]} href={c.href} data-reveal style={`--d:${i % 3}`}>
+          {c.img && <img src={c.img} alt="" loading="lazy" />}
+          <div class="wtg__body">
+            <span class="wtg__n">0{i + 1}</span>
+            <h2>{c.title}</h2>
+            {c.text && <p>{c.text}</p>}
+            {c.cta && <span class="wtg__cta">{c.cta} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></span>}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .wtg__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 300px;
+    gap: 16px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 380px;
+    }
+  }
+  .wtg__card {
+    grid-column: span 2;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-l);
+    color: #fff;
+    background: $teal-800;
+    isolation: isolate;
+    &.wtg__card--0 {
+      grid-column: span 4;
+      grid-row: span 2;
+    }
+    &.wtg__card--1 {
+      grid-row: span 2;
+    }
+    @include down($bp-lg) {
+      grid-column: auto !important;
+      grid-row: auto !important;
+    }
+    img {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 1.4s var(--ease-out);
+    }
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(transparent 25%, rgba(0, 38, 43, 0.92));
+      transition: background 0.5s;
+    }
+    &:hover {
+      img {
+        transform: scale(1.07);
+      }
+      &::before {
+        background: linear-gradient(rgba(0, 53, 60, 0.3), rgba(0, 38, 43, 0.96));
+      }
+      .wtg__cta {
+        background: $sun-500;
+      }
+    }
+    &:focus-visible {
+      outline: 3px solid $sun-500;
+      outline-offset: 3px;
+    }
+  }
+  .wtg__body {
+    position: absolute;
+    inset: auto 0 0;
+    padding: clamp(22px, 3vw, 36px);
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+    h2 {
+      font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+    }
+    p {
+      opacity: 0.85;
+      font-size: 0.98rem;
+      max-width: 46ch;
+    }
+  }
+  .wtg__n {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: $sun-300;
+  }
+  .wtg__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(6px);
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: background 0.4s;
+    :global([dir='rtl']) & svg {
+      transform: scaleX(-1);
+    }
+  }
+</style>

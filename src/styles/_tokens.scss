@@ -1,0 +1,87 @@
+// Brand palette from the original site (--color-primary #004F59, --color-secondary #F68D2E),
+// extended into a full tonal system.
+$teal-950: #00262b;
+$teal-900: #00353c;
+$teal-800: #004f59;
+$teal-700: #0b6570;
+$teal-500: #2f8a92;
+$teal-200: #b9dcdc;
+$sun-600: #e0731a;
+$sun-500: #f68d2e;
+$sun-300: #ffbe7d;
+$sun-100: #ffe9d2;
+$sage: #6fa287;
+$clay: #a37f74;
+$sand: #d3bba8;
+$paper: #fbf7f1;
+$paper-2: #f3ece2;
+$ink: #102326;
+
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+$bp-sm: 640px;
+$bp-md: 900px;
+$bp-lg: 1200px;
+
+:root {
+  --teal-950: #{$teal-950};
+  --teal-900: #{$teal-900};
+  --teal-800: #{$teal-800};
+  --teal-700: #{$teal-700};
+  --teal-500: #{$teal-500};
+  --teal-200: #{$teal-200};
+  --sun-600: #{$sun-600};
+  --sun-500: #{$sun-500};
+  --sun-300: #{$sun-300};
+  --sun-100: #{$sun-100};
+  --sage: #{$sage};
+  --clay: #{$clay};
+  --sand: #{$sand};
+
+  --bg: #{$paper};
+  --bg-2: #{$paper-2};
+  --surface: #ffffff;
+  --text: #{$ink};
+  --text-2: #4a5b5e;
+  --line: rgba(0, 79, 89, 0.12);
+  --accent: #{$sun-500};
+  --brand: #{$teal-800};
+
+  --font-display: 'Fraunces', 'Alexandria', Georgia, serif;
+  --font-body: 'Manrope', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+
+  --radius-s: 10px;
+  --radius: 20px;
+  --radius-l: 36px;
+  --shadow: 0 1px 2px rgba(0, 38, 43, 0.06), 0 12px 40px -12px rgba(0, 38, 43, 0.18);
+  --shadow-lift: 0 2px 4px rgba(0, 38, 43, 0.06), 0 30px 60px -20px rgba(0, 38, 43, 0.35);
+  --header-h: 76px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --max: 1320px;
+  --ease-out: #{$ease-out};
+}
+
+:root[dir='rtl'] {
+  --font-display: 'Alexandria', 'IBM Plex Sans Arabic', sans-serif;
+  --font-body: 'IBM Plex Sans Arabic', 'Alexandria', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #{$teal-950};
+    --bg-2: #062f35;
+    --surface: #0a3a41;
+    --text: #eef4f2;
+    --text-2: #a9c2c3;
+    --line: rgba(185, 220, 220, 0.14);
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #{$teal-950};
+  --bg-2: #062f35;
+  --surface: #0a3a41;
+  --text: #eef4f2;
+  --text-2: #a9c2c3;
+  --line: rgba(185, 220, 220, 0.14);
+}

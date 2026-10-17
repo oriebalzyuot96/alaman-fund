@@ -1,0 +1,173 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { data, ui, type Lang } from '../lib/i18n';
+import { crumbs } from '../lib/crumbs';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const ps = flat.filter((b) => b.t === 'p');
+const intro = ps[0]?.text;
+const h2 = flat.find((b) => b.t === 'h2')?.text;
+const sub = ps[1]?.text;
+const img = flat.find((b) => b.t === 'img')?.src;
+const tiers: { price: string; unit: string; desc: string; hours: number; href: string }[] = [];
+flat.forEach((b, i) => {
+  const m = b.t === 'p' && b.text!.match(/^([\d.]+)\s*(.*)$/);
+  if (m && flat[i + 1]?.t === 'p') {
+    const desc = flat[i + 1].text!;
+    const hours = parseInt(desc.match(/(\d+)\s*(credit|ساع)/)?.[1] || '1');
+    const a = flat.slice(i + 2, i + 4).find((x) => x.t === 'a');
+    tiers.push({ price: m[1], unit: m[2], desc, hours, href: a?.href || 'https://recurring.alamanfund.jo/' });
+  }
+});
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={t.giveKicker} lead={intro} crumbs={crumbs(lang, slug)} image={img} />
+
+  <section class="section hrs">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="h2" data-reveal>{h2}</h2>
+        <p class="lead" data-reveal style="--d:1">{sub}</p>
+      </div>
+
+      <div class="hrs__meter" data-reveal aria-hidden="true">
+        {Array.from({ length: 30 }, (_, i) => <i style={`--i:${i}`}></i>)}
+        <span class="hrs__meterLabel"><b id="hrs-n">{tiers[2]?.hours}</b> / 30 {lang === 'ar' ? 'ساعة دراسية' : 'credit hours'}</span>
+      </div>
+
+      <div class="hrs__grid" role="radiogroup" aria-label={h2}>
+        {tiers.map((tr, i) => (
+          <label class="hrs__tier" data-reveal style={`--d:${i}`} data-hours={tr.hours}>
+            <input type="radio" name="tier" value={i} checked={i === 2} />
+            <span class="hrs__price"><strong>{tr.price}</strong> {tr.unit}</span>
+            <span class="hrs__desc">{tr.desc}</span>
+            <a class="btn" href={tr.href} target="_blank" rel="noopener">{t.joinProgram}</a>
+          </label>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const meter = document.querySelector<HTMLElement>('.hrs__meter')!;
+  const n = document.getElementById('hrs-n')!;
+  const set = (h: number) => {
+    meter.querySelectorAll('i').forEach((d, k) => d.classList.toggle('on', k < h));
+    n.textContent = String(h);
+  };
+  document.querySelectorAll<HTMLElement>('.hrs__tier').forEach((el) => {
+    const h = +el.dataset.hours!;
+    el.addEventListener('pointerenter', () => set(h));
+    el.querySelector('input')!.addEventListener('change', () => set(h));
+  });
+  document.querySelector('.hrs__grid')!.addEventListener('pointerleave', () => {
+    const on = document.querySelector<HTMLInputElement>('.hrs__tier input:checked');
+    set(+(on?.closest<HTMLElement>('.hrs__tier')?.dataset.hours || 9));
+  });
+  set(+(document.querySelector<HTMLElement>('.hrs__tier input:checked')?.closest<HTMLElement>('.hrs__tier')?.dataset.hours || 9));
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .hrs__meter {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(30, 1fr);
+    gap: 6px;
+    margin-bottom: 40px;
+    padding-bottom: 36px;
+    i {
+      height: 46px;
+      border-radius: 8px;
+      background: var(--bg-2);
+      border: 1px solid var(--line);
+      transition: background 0.4s var(--ease-out), transform 0.5s var(--ease-out);
+      transition-delay: calc(var(--i) * 12ms);
+    }
+    i:global(.on) {
+      background: linear-gradient($sun-300, $sun-500);
+      border-color: transparent;
+      transform: scaleY(1.12);
+    }
+    @include down($bp-sm) {
+      gap: 3px;
+      i {
+        height: 30px;
+        border-radius: 4px;
+      }
+    }
+  }
+  .hrs__meterLabel {
+    position: absolute;
+    bottom: 0;
+    inset-inline-start: 0;
+    font-size: 0.9rem;
+    color: var(--text-2);
+    b {
+      font: 500 1.3rem/1 var(--font-display);
+      color: $sun-600;
+    }
+  }
+  .hrs__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+  .hrs__tier {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    justify-items: start;
+    padding: 26px 22px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    transition: border-color 0.3s, transform 0.4s var(--ease-out), box-shadow 0.4s;
+    input {
+      position: absolute;
+      opacity: 0;
+    }
+    &:hover {
+      transform: translateY(-4px);
+    }
+    &:has(input:checked) {
+      border-color: $sun-500;
+      box-shadow: 0 20px 40px -20px rgba(246, 141, 46, 0.6);
+    }
+    &:has(input:focus-visible) {
+      outline: 2px solid $sun-500;
+      outline-offset: 3px;
+    }
+    .btn {
+      margin-top: auto;
+      padding: 0.8em 1.2em;
+      font-size: 0.85rem;
+    }
+  }
+  .hrs__price {
+    color: var(--text-2);
+    font-size: 0.85rem;
+    strong {
+      display: block;
+      font: 400 2.6rem/1 var(--font-display);
+      color: var(--text);
+    }
+  }
+  .hrs__desc {
+    font-weight: 600;
+    min-height: 3em;
+  }
+</style>

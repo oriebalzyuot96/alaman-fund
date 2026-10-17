@@ -1,0 +1,989 @@
+---
+import Base from '../layouts/Base.astro';
+import HeroScene from '../islands/HeroScene';
+import Illo from '../components/Illo.astro';
+import Video from '../components/Video.astro';
+import NewsCard from '../components/NewsCard.astro';
+import { data, ui, href, fmtDate, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const D = data[lang];
+const home = D.pages[''];
+const all = home.sections.flat();
+const intro = all.find((b) => b.t === 'p')!.text!;
+const storyIdx = all.findIndex((b) => b.t === 'h2');
+const story = { kicker: all[storyIdx - 1]?.text, title: all[storyIdx].text, body: all[storyIdx + 1]?.text };
+const stats = all.filter((b) => b.t === 'stat');
+
+const programsPage = D.pages['who-we-are/our-programs'].sections.flat();
+const programs = programsPage
+  .map((b, i) => (b.t === 'h2' ? { title: b.text!, text: programsPage[i + 1]?.text || '' } : null))
+  .filter(Boolean) as { title: string; text: string }[];
+const programIllos = ['education', 'living', 'capacity', 'psycho', 'inclusion'] as const;
+const firstSentence = (s: string) => (s.match(/^.+?[.!؟。](\s|$)/)?.[0] || s).trim();
+
+const royal = D.news.filter((n) => n.category === 'royal');
+const news = D.news.filter((n) => n.category !== 'royal').slice(0, 5);
+
+// Giving tiers parsed from the individual-donation page ("1,500 JOD Covers …")
+const ind = D.pages['ways-to-give/individual-donation'].sections.flat().filter((b) => b.t === 'p');
+const tiers = ind
+  .map((b, i) => {
+    const m = b.text!.match(/^([\d,.]+)\s*(JOD|دينار أردني)\s*(.*)$/);
+    return m ? { name: ind[i - 1].text!, amount: m[1], cur: m[2], text: m[3] } : null;
+  })
+  .filter(Boolean) as { name: string; amount: string; cur: string; text: string }[];
+const hoursFrom = lang === 'ar' ? '2.5 دينار شهرياً' : '2.5 JOD / month';
+
+const journey = [
+  { illo: 'care', title: lang === 'ar' ? 'مغادرة دار الرعاية عند 18' : 'Leaving care at 18', text: lang === 'ar' ? 'يفقد الشباب الدعم المؤسسي ويواجهون الحياة وحدهم دون شبكة أمان عائلية.' : 'Youth lose institutional support and face adult life alone, without a family safety net.' },
+  { illo: 'education', title: programs[0]?.title, text: firstSentence(programs[0]?.text || '') },
+  { illo: 'living', title: programs[1]?.title, text: firstSentence(programs[1]?.text || '') },
+  { illo: 'capacity', title: programs[2]?.title, text: firstSentence(programs[2]?.text || '') },
+  { illo: 'job', title: lang === 'ar' ? 'التخرج والوظيفة الأولى' : 'Graduation & a first job', text: `${stats.find((s) => s.value.includes('78'))?.value} ${stats.find((s) => s.value.includes('78'))?.text}` },
+] as const;
+const excellence = D.pages['pursuing-excellence'].sections.flat();
+const award = excellence.find((b) => b.t === 'h2' && excellence.indexOf(b) > 0);
+const awardText = excellence.find((b) => b.t === 'p')?.text;
+const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
+---
+<Base lang={lang} title={t.orgName} scene>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero__canvas" aria-hidden="true"><HeroScene client:only="react" rtl={lang === "ar"} /></div>
+    <div class="hero__veil" aria-hidden="true"></div>
+    <div class="container hero__in">
+      <p class="kicker hero__kicker" data-intro style="--d:0">{t.heroKicker}</p>
+      <h1 class="hero__title">
+        <span class="hero__line"><span data-intro style="--d:1">{t.heroTitleA}</span></span>
+        <span class="hero__line"><span data-intro style="--d:2">{t.heroTitleB}</span></span>
+        <span class="hero__line hero__line--sun"><span data-intro style="--d:3"><em>{t.heroTitleC}</em></span></span>
+      </h1>
+      <p class="lead hero__lead" data-intro style="--d:4">{intro}</p>
+      <div class="hero__ctas" data-intro style="--d:5">
+        <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate} <svg class="arrow" width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
+        <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{t.apply}</a>
+      </div>
+    </div>
+    <div class="hero__aside container" data-intro style="--d:6">
+      <div class="hero__chip">
+        <strong><span data-count={num(stats[1].value)}>0</span></strong>
+        <span>{stats[1].text}</span>
+      </div>
+      <a href="#story" class="hero__scroll"><span>{t.scroll}</span><i></i></a>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {[0, 1].map(() => programs.map((p) => <span>{p.title}<i>✦</i></span>))}
+    </div>
+  </div>
+
+  <!-- STORY -->
+  <section class="section story" id="story">
+    <div class="container story__grid">
+      <div class="story__text">
+        <p class="kicker" data-reveal>{story.kicker}</p>
+        <h2 class="h2" data-reveal style="--d:1">{story.title}</h2>
+        <p class="lead" data-reveal style="--d:2">{story.body}</p>
+        <a class="link-arrow" href={href(lang, 'who-we-are')} data-reveal style="--d:3">{t.learnMore} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
+      </div>
+      <div class="story__collage">
+        <figure class="story__img story__img--a" data-reveal="clip" data-parallax="-0.06"><img src="/media/2026/05/graduates-.jpg" alt="" loading="lazy" /></figure>
+        <figure class="story__img story__img--b" data-reveal="clip" style="--d:2" data-parallax="0.08"><img src="/media/2026/05/vocational-training-1.jpg" alt="" loading="lazy" /></figure>
+        <div class="story__badge" data-reveal style="--d:3">
+          <strong>2006</strong>
+          <span>{lang === 'ar' ? 'مبادرة جلالة الملكة رانيا العبدالله' : 'A royal initiative by Her Majesty Queen Rania Al Abdullah'}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section class="section impact dark-surface">
+    <div class="container">
+      <div class="section-head">
+        <p class="kicker" data-reveal>{lang === 'ar' ? 'أثرنا' : 'Our impact'}</p>
+        <h2 class="h2" data-reveal style="--d:1">{t.impact}</h2>
+      </div>
+      <div class="bento">
+        {stats.map((s, i) => {
+          const n = num(s.value);
+          return (
+            <div class:list={['bento__it', `bento__it--${i}`]} data-reveal data-tilt style={`--d:${i % 4}`}>
+              <strong>{isNaN(n) ? s.value : <><span data-count={n}>0</span>{s.value.includes('%') ? '%' : ''}</>}</strong>
+              <span>{s.text}</span>
+              {i === 1 && <div class="bento__orb" aria-hidden="true"></div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- JOURNEY -->
+  <section class="section journey">
+    <div class="container">
+      <div class="section-head">
+        <p class="kicker" data-reveal>{t.journeyKicker}</p>
+        <h2 class="h2" data-reveal style="--d:1">{t.journeyTitle}</h2>
+      </div>
+      <div class="journey__track" id="journey">
+        <svg class="journey__path" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true">
+          <path class="journey__base" d="M0 60 C 100 0, 150 120, 250 60 S 400 0, 500 60 S 650 120, 750 60 S 900 0, 1000 60" />
+          <path class="journey__glow" pathLength="1" d="M0 60 C 100 0, 150 120, 250 60 S 400 0, 500 60 S 650 120, 750 60 S 900 0, 1000 60" />
+        </svg>
+        <ol class="journey__steps">
+          {journey.map((s, i) => (
+            <li class="journey__step" data-reveal style={`--d:${i}`}>
+              <div class="journey__illo"><Illo name={s.illo} /></div>
+              <span class="journey__n">0{i + 1}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRAMS -->
+  <section class="section programs">
+    <div class="container">
+      <div class="section-head section-head--row">
+        <div>
+          <p class="kicker" data-reveal>{t.programsKicker}</p>
+          <h2 class="h2" data-reveal style="--d:1">{t.programsTitle}</h2>
+        </div>
+        <a class="link-arrow" href={href(lang, 'who-we-are/our-programs')} data-reveal>{D.pages['who-we-are/our-programs'].title} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
+      </div>
+      <div class="pgrid">
+        {programs.map((p, i) => (
+          <a class="pcard" href={href(lang, `who-we-are/our-programs#p${i + 1}`)} data-reveal data-tilt style={`--d:${i}`}>
+            <div class="pcard__illo"><Illo name={programIllos[i]} /></div>
+            <span class="pcard__n">0{i + 1}</span>
+            <h3>{p.title}</h3>
+            <p>{firstSentence(p.text)}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FILM -->
+  <section class="section film dark-surface">
+    <div class="container film__grid">
+      <div class="film__text">
+        <p class="kicker" data-reveal>{t.filmKicker}</p>
+        <h2 class="h2" data-reveal style="--d:1">{award?.text}</h2>
+        <p class="lead" data-reveal style="--d:2">{firstSentence(awardText || "")}</p>
+        <a class="link-arrow" href={href(lang, 'pursuing-excellence')} data-reveal style="--d:3">{D.pages['pursuing-excellence'].title} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
+      </div>
+      <Video id="P4qWuysF2G8" title={t.filmTitle} label={t.watch} poster="/media/2026/05/The-Order-of-Al-Istiqlal-Independence-of-the-First-Degree.jpeg" />
+    </div>
+  </section>
+
+  <!-- ROYAL -->
+  <section class="section royal">
+    <div class="container section-head section-head--row">
+      <div>
+        <p class="kicker" data-reveal>{t.royalKicker}</p>
+        <h2 class="h2" data-reveal style="--d:1">{all.find((b, i) => b.t === 'h2' && i > storyIdx)?.text}</h2>
+      </div>
+      <div class="royal__nav" data-reveal>
+        <button type="button" data-scroll="-1" aria-label="Previous">←</button>
+        <button type="button" data-scroll="1" aria-label="Next">→</button>
+      </div>
+    </div>
+    <div class="royal__rail" id="royal-rail">
+      {royal.map((n, i) => (
+        <a class="rcard" href={href(lang, `news/${n.id}`)} data-reveal style={`--d:${i % 4}`}>
+          <img src={n.image} alt="" loading="lazy" />
+          <div class="rcard__body">
+            <time>{fmtDate(lang, n.date)}</time>
+            <h3>{n.title}</h3>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- NEWS -->
+  <section class="section news">
+    <div class="container">
+      <div class="section-head section-head--row">
+        <div>
+          <p class="kicker" data-reveal>{t.newsKicker}</p>
+          <h2 class="h2" data-reveal style="--d:1">{t.newsTitle}</h2>
+        </div>
+        <a class="link-arrow" href={href(lang, 'news')} data-reveal>{t.allNews} <svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></a>
+      </div>
+      <div class="ngrid">
+        {news.map((p, i) => <NewsCard lang={lang} post={p} big={i === 0} i={i} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- GIVE -->
+  <section class="section give">
+    <div class="container">
+      <div class="section-head">
+        <p class="kicker" data-reveal>{t.giveKicker}</p>
+        <h2 class="h2" data-reveal style="--d:1">{D.pages['ways-to-give/individual-donation'].title}</h2>
+      </div>
+      <div class="tiers">
+        {tiers.map((tr, i) => (
+          <div class:list={['tier', { 'tier--hot': i === 1 }]} data-reveal data-tilt style={`--d:${i}`}>
+            <h3>{tr.name}</h3>
+            <p class="tier__price"><strong>{tr.amount}</strong> {tr.cur}</p>
+            <p>{tr.text}</p>
+            <a class:list={['btn', { 'btn--ghost': i !== 1 }]} href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
+          </div>
+        ))}
+        <div class="tier tier--alt" data-reveal data-tilt style="--d:2">
+          <h3>{D.pages['ways-to-give/employee-deduction-program'].title}</h3>
+          <p class="tier__price"><strong>{hoursFrom.split(' ')[0]}</strong> {hoursFrom.split(' ').slice(1).join(' ')}</p>
+          <p>{D.pages['ways-to-give/employee-deduction-program'].sections.flat().find((b) => b.t === 'p')?.text?.slice(0, 150)}…</p>
+          <a class="btn btn--ghost" href={href(lang, 'ways-to-give/employee-deduction-program')}>{t.joinProgram}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Hero copy enters once the loader lifts.
+  const go = () => document.querySelectorAll('[data-intro]').forEach((el) => el.classList.add('is-in'));
+  (window as any).__amanLoaded ? go() : addEventListener('loader:done', go, { once: true });
+
+  // Journey path draws with scroll progress.
+  const track = document.getElementById('journey');
+  const glow = track?.querySelector<SVGPathElement>('.journey__glow');
+  // Parallax images.
+  const par = [...document.querySelectorAll<HTMLElement>('[data-parallax]')];
+  const onScroll = () => {
+    const vh = innerHeight;
+    if (track && glow) {
+      const r = track.getBoundingClientRect();
+      const k = Math.min(Math.max((vh * 0.85 - r.top) / (r.height + vh * 0.35), 0), 1);
+      glow.style.strokeDashoffset = String(1 - k);
+    }
+    for (const el of par) {
+      const r = el.getBoundingClientRect();
+      el.style.translate = `0 ${(r.top + r.height / 2 - vh / 2) * parseFloat(el.dataset.parallax!)}px`;
+    }
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Royal rail arrows
+  const rail = document.getElementById('royal-rail')!;
+  const rtl = document.dir === 'rtl';
+  document.querySelectorAll<HTMLButtonElement>('[data-scroll]').forEach((b) =>
+    b.addEventListener('click', () => rail.scrollBy({ left: +b.dataset.scroll! * (rtl ? -1 : 1) * rail.clientWidth * 0.8, behavior: 'smooth' })),
+  );
+  // drag-to-scroll
+  let down = false, sx = 0, sl = 0;
+  rail.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') return; down = true; sx = e.clientX; sl = rail.scrollLeft; rail.classList.add('is-drag'); });
+  addEventListener('pointerup', () => { down = false; rail.classList.remove('is-drag'); });
+  rail.addEventListener('pointermove', (e) => { if (down) rail.scrollLeft = sl - (e.clientX - sx); });
+  rail.addEventListener('click', (e) => { if (Math.abs(rail.scrollLeft - sl) > 5 && sl !== 0) e.preventDefault(); }, true);
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  [data-intro] {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s var(--ease-out), transform 1.3s var(--ease-out);
+    transition-delay: calc(0.1s + var(--d) * 110ms);
+    &:global(.is-in) {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .hero__line > [data-intro]:not(:global(.is-in)) {
+    transform: translateY(105%);
+  }
+
+  // HERO
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    align-items: center;
+    padding: calc(var(--header-h) + 40px) 0 120px;
+    background: radial-gradient(90% 80% at 75% 35%, #0b5e66 0%, $teal-900 45%, $teal-950 100%);
+    color: #fff;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero__canvas {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .hero__veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgba(0, 38, 43, 0.85) 0%, rgba(0, 38, 43, 0.35) 45%, transparent 70%), linear-gradient(transparent 70%, $teal-950);
+    pointer-events: none;
+    :global([dir='rtl']) & {
+      background: linear-gradient(-90deg, rgba(0, 38, 43, 0.85) 0%, rgba(0, 38, 43, 0.35) 45%, transparent 70%), linear-gradient(transparent 70%, $teal-950);
+    }
+    @include down($bp-md) {
+      background: linear-gradient(rgba(0, 38, 43, 0.2), rgba(0, 38, 43, 0.75) 60%, $teal-950);
+    }
+  }
+  .hero__in {
+    display: grid;
+    gap: 26px;
+    @include down($bp-md) {
+      align-self: end;
+    }
+  }
+  .hero__kicker {
+    color: $sun-300;
+  }
+  .hero__title {
+    font-size: clamp(2.8rem, 7.4vw, 7rem);
+    line-height: 0.98;
+    font-weight: 400;
+    max-width: 11ch;
+    :global([dir='rtl']) & {
+      line-height: 1.25;
+      font-weight: 600;
+      max-width: 12ch;
+    }
+  }
+  .hero__line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+    > span {
+      display: inline-block;
+    }
+  }
+  .hero__line--sun em {
+    font-style: italic;
+    color: $sun-500;
+    background: linear-gradient(90deg, $sun-300, $sun-500 40%, $sun-600);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    :global([dir='rtl']) & {
+      font-style: normal;
+    }
+  }
+  .hero__lead {
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 48ch;
+  }
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero__aside {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+  }
+  .hero__chip {
+    @include glass(0.45);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px 12px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    strong {
+      display: grid;
+      place-items: center;
+      min-width: 74px;
+      height: 46px;
+      padding-inline: 10px;
+      border-radius: 999px;
+      background: $sun-500;
+      color: #fff;
+      font: 500 1.2rem/1 var(--font-display);
+    }
+    @include down($bp-sm) {
+      display: none;
+    }
+    @media (max-height: 760px) {
+      display: none;
+    }
+  }
+  .hero__scroll {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin-inline-start: auto;
+    i {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(rgba(255, 255, 255, 0.6), transparent);
+      position: relative;
+      overflow: hidden;
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: $sun-500;
+        animation: drip 2s var(--ease-out) infinite;
+      }
+    }
+  }
+  @keyframes drip {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  // MARQUEE
+  .marquee {
+    overflow: hidden;
+    background: $sun-500;
+    color: #fff;
+    padding-block: 18px;
+    transform: rotate(-1.2deg);
+    margin: -18px -10px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+    span {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding-inline-end: 28px;
+      font: 500 clamp(1.3rem, 2.4vw, 2rem) / 1 var(--font-display);
+      white-space: nowrap;
+    }
+    i {
+      font-style: normal;
+      font-size: 0.7em;
+      opacity: 0.7;
+    }
+    :global([dir='rtl']) & {
+      animation-name: marquee-rtl;
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes marquee-rtl {
+    to {
+      transform: translateX(50%);
+    }
+  }
+
+  // STORY
+  .story__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(40px, 7vw, 110px);
+    align-items: center;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .story__text {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+  }
+  .story__collage {
+    position: relative;
+    aspect-ratio: 1 / 1.05;
+  }
+  .story__img {
+    position: absolute;
+    margin: 0;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    box-shadow: var(--shadow-lift);
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  .story__img--a {
+    inset: 0 18% 22% 0;
+  }
+  .story__img--b {
+    inset: 46% 0 0 34%;
+    border: 8px solid var(--bg);
+  }
+  .story__badge {
+    position: absolute;
+    inset-inline-start: -4%;
+    bottom: 6%;
+    width: 200px;
+    padding: 22px;
+    border-radius: var(--radius);
+    background: $teal-800;
+    color: #fff;
+    display: grid;
+    gap: 6px;
+    box-shadow: var(--shadow-lift);
+    strong {
+      font: 400 2.8rem/1 var(--font-display);
+      color: $sun-300;
+    }
+    span {
+      font-size: 0.86rem;
+      line-height: 1.45;
+      opacity: 0.85;
+    }
+  }
+
+  // IMPACT
+  .impact {
+    background: radial-gradient(70% 60% at 100% 0%, rgba(246, 141, 46, 0.18), transparent), $teal-950;
+    color: #fff;
+    border-radius: var(--radius-l);
+    margin-inline: clamp(0px, 1.5vw, 20px);
+    .kicker {
+      color: $sun-300;
+    }
+  }
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(170px, auto);
+    gap: 14px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .bento__it {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 26px;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.4s var(--ease-out), background 0.4s;
+    &:hover {
+      background: rgba(255, 255, 255, 0.07);
+    }
+    strong {
+      font: 300 clamp(2.6rem, 4.4vw, 4.2rem) / 1 var(--font-display);
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    > span {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.95rem;
+      position: relative;
+    }
+  }
+  .bento__it--5,
+  .bento__it--6 {
+    grid-column: span 2;
+    @include down($bp-lg) {
+      grid-column: auto;
+    }
+  }
+  .bento__it--1 {
+    grid-column: span 2;
+    grid-row: span 2;
+    background: linear-gradient(160deg, $teal-700, $teal-800 60%);
+    strong {
+      font-size: clamp(4rem, 9vw, 8.5rem);
+      position: relative;
+      z-index: 1;
+    }
+    @include down($bp-sm) {
+      grid-column: auto;
+    }
+  }
+  .bento__it--4 {
+    background: $sun-500;
+    border-color: transparent;
+    > span {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+  .bento__orb {
+    position: absolute;
+    width: 70%;
+    aspect-ratio: 1;
+    top: -20%;
+    inset-inline-end: -18%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, $sun-300, $sun-500 55%, transparent 72%);
+    filter: blur(2px);
+    opacity: 0.9;
+    animation: float 9s ease-in-out infinite alternate;
+  }
+  @keyframes float {
+    to {
+      transform: translate(-6%, 10%) scale(1.06);
+    }
+  }
+
+  // JOURNEY
+  .journey__track {
+    position: relative;
+  }
+  .journey__path {
+    position: absolute;
+    inset-inline: 0;
+    top: 70px;
+    width: 100%;
+    height: 120px;
+    @include down($bp-lg) {
+      display: none;
+    }
+    :global([dir='rtl']) & {
+      transform: scaleX(-1);
+    }
+    path {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+  }
+  .journey__base {
+    stroke: var(--line);
+    stroke-dasharray: 6 10;
+  }
+  .journey__glow {
+    stroke: $sun-500;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    filter: drop-shadow(0 0 6px rgba(246, 141, 46, 0.6));
+  }
+  .journey__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+  }
+  .journey__step {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    &:nth-child(even) {
+      margin-top: 60px;
+      @include down($bp-lg) {
+        margin-top: 0;
+      }
+    }
+    h3 {
+      font-size: 1.25rem;
+    }
+    p {
+      font-size: 0.93rem;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+  }
+  .journey__illo {
+    width: 128px;
+    padding: 8px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .journey__n {
+    font: 600 0.8rem/1 var(--font-body);
+    color: $sun-600;
+    letter-spacing: 0.1em;
+  }
+
+  // PROGRAMS
+  .programs {
+    background: var(--bg-2);
+  }
+  .pgrid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    @include down($bp-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pcard {
+    grid-column: span 2;
+    position: relative;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 30px;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform 0.4s var(--ease-out), box-shadow 0.5s;
+    &:nth-child(4),
+    &:nth-child(5) {
+      grid-column: span 3;
+    }
+    @include down($bp-lg) {
+      grid-column: auto !important;
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(500px circle at var(--gx, 50%) var(--gy, 50%), rgba(246, 141, 46, 0.1), transparent 45%);
+      pointer-events: none;
+    }
+    &:hover {
+      box-shadow: var(--shadow-lift);
+    }
+    h3 {
+      font-size: 1.5rem;
+    }
+    p {
+      color: var(--text-2);
+      font-size: 0.95rem;
+    }
+  }
+  .pcard__illo {
+    width: 120px;
+    margin-bottom: 6px;
+  }
+  .pcard__n {
+    position: absolute;
+    top: 24px;
+    inset-inline-end: 28px;
+    font: 300 3rem/1 var(--font-display);
+    color: var(--line);
+    -webkit-text-stroke: 1px var(--teal-200);
+    color: transparent;
+  }
+
+  // FILM
+  .film {
+    background: $teal-900;
+    color: #fff;
+    .kicker {
+      color: $sun-300;
+    }
+    .lead {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .link-arrow {
+      color: $sun-300;
+    }
+  }
+  .film__grid {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: clamp(30px, 5vw, 80px);
+    align-items: center;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .film__text {
+    display: grid;
+    gap: 20px;
+    justify-items: start;
+    .h2 {
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+    }
+  }
+
+  // ROYAL
+  .royal__nav {
+    display: flex;
+    gap: 8px;
+    button {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      font-size: 1.2rem;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+      &:hover {
+        background: $teal-800;
+        color: #fff;
+        border-color: $teal-800;
+      }
+      :global([dir='rtl']) & {
+        transform: scaleX(-1);
+      }
+    }
+  }
+  .royal__rail {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 6px max(var(--gutter), calc((100vw - var(--max)) / 2 + var(--gutter))) 24px;
+    scrollbar-width: none;
+    cursor: grab;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    &:global(.is-drag) {
+      cursor: grabbing;
+      scroll-snap-type: none;
+    }
+  }
+  .rcard {
+    flex: 0 0 clamp(280px, 34vw, 440px);
+    scroll-snap-align: start;
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    color: #fff;
+    user-select: none;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 1.4s var(--ease-out);
+      pointer-events: none;
+    }
+    &:hover img {
+      transform: scale(1.06);
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent 40%, rgba(0, 38, 43, 0.92));
+    }
+  }
+  .rcard__body {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
+    padding: 26px;
+    display: grid;
+    gap: 8px;
+    time {
+      font-size: 0.8rem;
+      color: $sun-300;
+      font-weight: 600;
+    }
+    h3 {
+      font-size: 1.3rem;
+      line-height: 1.25;
+    }
+  }
+
+  // NEWS
+  .ngrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    > :global(:first-child) {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+    @include down($bp-lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+      > :global(:first-child) {
+        grid-column: auto;
+      }
+    }
+  }
+
+  // GIVE
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .tier {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    justify-items: start;
+    padding: 34px;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: transform 0.4s var(--ease-out);
+    h3 {
+      font-size: 1.35rem;
+    }
+    > p:not(.tier__price) {
+      color: var(--text-2);
+      font-size: 0.95rem;
+      min-height: 4.8em;
+    }
+    .btn {
+      margin-top: 8px;
+      color: var(--text);
+    }
+  }
+  .tier__price {
+    color: var(--text-2);
+    strong {
+      font: 400 clamp(2.8rem, 4vw, 3.6rem) / 1 var(--font-display);
+      color: var(--text);
+    }
+  }
+  .tier--hot {
+    background: radial-gradient(120% 90% at 100% 0%, $teal-700, $teal-900);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: var(--shadow-lift);
+    > p:not(.tier__price),
+    .tier__price {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .tier__price strong {
+      color: $sun-300;
+    }
+    .btn {
+      color: #fff;
+    }
+  }
+</style>

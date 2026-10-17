@@ -1,0 +1,149 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Illo from '../components/Illo.astro';
+import { data, ui, href, type Lang } from '../lib/i18n';
+import { crumbs } from '../lib/crumbs';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const programs = flat.map((b, i) => (b.t === 'h2' ? { title: b.text!, text: flat[i + 1]?.text || '' } : null)).filter(Boolean) as { title: string; text: string }[];
+const illos = ['education', 'living', 'capacity', 'psycho', 'inclusion'] as const;
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={t.programsKicker} lead={t.programsTitle} crumbs={crumbs(lang, slug)} image="/media/2026/05/vocational-training-1.jpg" />
+
+  <section class="section prg">
+    <div class="container prg__grid">
+      <nav class="prg__nav" aria-label={page.title}>
+        <ol>
+          {programs.map((p, i) => <li><a href={`#p${i + 1}`} data-prg-link={i}><span>0{i + 1}</span>{p.title}</a></li>)}
+        </ol>
+      </nav>
+      <div class="prg__list">
+        {programs.map((p, i) => (
+          <article class="prg__item" id={`p${i + 1}`} data-prg={i}>
+            <div class="prg__illo" data-reveal><Illo name={illos[i]} /></div>
+            <div class="prg__body">
+              <span class="prg__n" data-reveal>0{i + 1}</span>
+              <h2 class="h2" data-reveal style="--d:1">{p.title}</h2>
+              <p data-reveal style="--d:2">{p.text}</p>
+            </div>
+          </article>
+        ))}
+        <div class="prg__cta" data-reveal>
+          <a class="btn" href={href(lang, 'ways-to-give/donate')}>{t.donate}</a>
+          <a class="btn btn--ghost" href={href(lang, 'application-portal')}>{t.apply}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const links = document.querySelectorAll<HTMLElement>('[data-prg-link]');
+  const io = new IntersectionObserver(
+    (es) => es.forEach((e) => e.isIntersecting && links.forEach((l) => l.classList.toggle('is-on', l.dataset.prgLink === (e.target as HTMLElement).dataset.prg))),
+    { rootMargin: '-45% 0px -50% 0px' },
+  );
+  document.querySelectorAll('[data-prg]').forEach((el) => io.observe(el));
+</script>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+  @use '../styles/tokens' as *;
+
+  .prg__grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: clamp(30px, 6vw, 90px);
+    @include down($bp-md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .prg__nav {
+    position: sticky;
+    top: 120px;
+    align-self: start;
+    @include down($bp-md) {
+      display: none;
+    }
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 4px;
+      border-inline-start: 2px solid var(--line);
+    }
+    a {
+      display: flex;
+      gap: 12px;
+      padding: 10px 16px;
+      margin-inline-start: -2px;
+      border-inline-start: 2px solid transparent;
+      color: var(--text-2);
+      font-weight: 600;
+      transition: color 0.3s, border-color 0.3s;
+      span {
+        font-size: 0.75rem;
+        color: $sun-600;
+        padding-top: 3px;
+      }
+      &:global(.is-on),
+      &:hover {
+        color: var(--text);
+        border-color: $sun-500;
+      }
+    }
+  }
+  .prg__list {
+    display: grid;
+    gap: clamp(60px, 9vw, 130px);
+  }
+  .prg__item {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    gap: clamp(24px, 4vw, 60px);
+    align-items: center;
+    &:nth-child(even) {
+      .prg__illo {
+        order: 2;
+      }
+    }
+    @include down($bp-sm) {
+      grid-template-columns: 1fr;
+      .prg__illo {
+        order: 0 !important;
+        width: 60%;
+      }
+    }
+  }
+  .prg__illo {
+    padding: 8%;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .prg__body {
+    display: grid;
+    gap: 16px;
+    p {
+      font-size: 1.1rem;
+      color: var(--text-2);
+    }
+  }
+  .prg__n {
+    font: 300 4rem/1 var(--font-display);
+    color: transparent;
+    -webkit-text-stroke: 1.2px $sun-500;
+  }
+  .prg__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>

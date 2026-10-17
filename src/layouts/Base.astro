@@ -1,0 +1,142 @@
+---
+import '../styles/global.scss';
+import Loader from '../components/Loader.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SearchPalette from '../islands/SearchPalette';
+import ChatAssistant from '../islands/ChatAssistant';
+import { ui, href, altPath, type Lang } from '../lib/i18n';
+
+interface Props { lang: Lang; title: string; description?: string; image?: string; scene?: boolean }
+const { lang, title, description, image, scene = false } = Astro.props;
+const t = ui[lang];
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const fullTitle = path === '/' || path === '/ar' ? t.orgName : `${title} — ${t.orgShort}`;
+const desc = description || (lang === 'ar'
+  ? 'صندوق الأمان لمستقبل الأيتام: مبادرة ملكية تأسست عام 2006 لدعم الشباب الأيتام بعد سن 18 بالتعليم والدعم المعيشي والتمكين.'
+  : 'Al Aman Fund for the Future of Orphans — established in 2006 by Her Majesty Queen Rania Al Abdullah to support orphaned youth after the age of 18.');
+const quick = [
+  { label: ui[lang].donate, href: href(lang, 'ways-to-give/donate') },
+  { label: ui[lang].apply, href: href(lang, 'application-portal') },
+  { label: lang === 'ar' ? 'برامجنا' : 'Our programs', href: href(lang, 'who-we-are/our-programs') },
+  { label: lang === 'ar' ? 'التبرع الإلكتروني' : 'Digital donation', href: href(lang, 'ways-to-give/digital-donation') },
+  { label: lang === 'ar' ? 'الإعلام والأخبار' : 'News & releases', href: href(lang, 'news') },
+];
+---
+<!doctype html>
+<html lang={lang} dir={t.dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <meta name="theme-color" content="#00353c" />
+    <!-- Redesign concept: keep it out of search results so it is never mistaken for the official site. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.png" />
+    <link rel="alternate" hreflang={lang === 'en' ? 'ar' : 'en'} href={altPath(lang, path)} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    {image && <meta property="og:image" content={image} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href={lang === 'ar'
+        ? 'https://fonts.googleapis.com/css2?family=Alexandria:wght@300..700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400..800&display=swap'
+        : 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Manrope:wght@400..800&display=swap'}
+    />
+  </head>
+  <body data-needs-scene={scene ? '' : undefined}>
+    <a class="skip-link" href="#main">{lang === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
+    <Loader lang={lang} />
+    <Header lang={lang} path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <SearchPalette client:idle lang={lang} quick={quick} t={{ searchPlaceholder: t.searchPlaceholder, noResults: t.noResults, pages: t.pages, news: t.news, all: t.all, search: t.search }} />
+    <ChatAssistant client:idle lang={lang} t={{ chatTitle: t.chatTitle, chatHello: t.chatHello, chatPlaceholder: t.chatPlaceholder, chatSuggestions: t.chatSuggestions, chatFallback: t.chatFallback, chatNone: t.chatNone }} />
+
+    <script>
+      import Lenis from 'lenis';
+
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce) {
+        const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 0.95 });
+        const raf = (t: number) => {
+          lenis.raf(t);
+          requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+        const sync = () => (document.documentElement.classList.contains('no-scroll') || document.body.classList.contains('is-loading') ? lenis.stop() : lenis.start());
+        new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        sync();
+        document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) =>
+          a.addEventListener('click', (e) => {
+            const el = document.querySelector(a.getAttribute('href')!);
+            if (el) {
+              e.preventDefault();
+              lenis.scrollTo(el as HTMLElement, { offset: -90 });
+            }
+          }),
+        );
+      }
+
+      // Reveal-on-scroll, started after the loader lifts so the first view animates in.
+      const io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => e.isIntersecting && (e.target.classList.add('is-in'), io.unobserve(e.target))),
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+      );
+      const startReveal = () => document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+      (window as any).__amanLoaded ? startReveal() : addEventListener('loader:done', startReveal, { once: true });
+
+      // Animated counters: <span data-count="5088">
+      const counterIO = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            counterIO.unobserve(e.target);
+            const el = e.target as HTMLElement;
+            const end = parseFloat(el.dataset.count!);
+            const t0 = performance.now();
+            const dur = 2200;
+            const fmt = new Intl.NumberFormat(document.documentElement.lang === 'ar' ? 'ar-JO' : 'en-US');
+            const step = (now: number) => {
+              const k = Math.min((now - t0) / dur, 1);
+              el.textContent = fmt.format(Math.round(end * (1 - Math.pow(1 - k, 4))));
+              if (k < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          }),
+        { threshold: 0.5 },
+      );
+      document.querySelectorAll('[data-count]').forEach((el) => counterIO.observe(el));
+
+      // Spotlight on buttons follows the pointer.
+      document.addEventListener('pointermove', (e) => {
+        const b = (e.target as HTMLElement).closest?.('.btn') as HTMLElement | null;
+        if (!b) return;
+        const r = b.getBoundingClientRect();
+        b.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        b.style.setProperty('--my', `${e.clientY - r.top}px`);
+      });
+
+      // 3D tilt on cards marked [data-tilt]
+      if (!reduce && matchMedia('(hover: hover)').matches) {
+        document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
+          card.addEventListener('pointermove', (e) => {
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - 0.5;
+            const y = (e.clientY - r.top) / r.height - 0.5;
+            card.style.transform = `perspective(900px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(0)`;
+            card.style.setProperty('--gx', `${(x + 0.5) * 100}%`);
+            card.style.setProperty('--gy', `${(y + 0.5) * 100}%`);
+          });
+          card.addEventListener('pointerleave', () => (card.style.transform = ''));
+        });
+      }
+    </script>
+  </body>
+</html>

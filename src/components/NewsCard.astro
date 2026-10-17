@@ -1,0 +1,128 @@
+---
+import { ui, href, fmtDate, type Lang, type Post } from '../lib/i18n';
+interface Props { lang: Lang; post: Post; big?: boolean; i?: number }
+const { lang, post, big = false, i = 0 } = Astro.props;
+const t = ui[lang];
+---
+<article class:list={['nc', { 'nc--big': big }]} data-reveal style={`--d:${i % 3}`}>
+  <a href={href(lang, `news/${post.id}`)} class="nc__link">
+    <div class="nc__media">
+      {post.image ? <img src={post.image} alt="" loading="lazy" /> : <div class="nc__ph" />}
+      <span class:list={['nc__tag', { 'nc__tag--royal': post.category === 'royal' }]}>{post.category === 'royal' ? t.royal : t.news}</span>
+    </div>
+    <div class="nc__body">
+      <time datetime={post.date}>{fmtDate(lang, post.date)}</time>
+      <h3>{post.title}</h3>
+      {big && post.excerpt && <p>{post.excerpt}</p>}
+      <span class="nc__more">{t.readMore} <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg></span>
+    </div>
+  </a>
+</article>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+
+  .nc {
+    height: 100%;
+  }
+  .nc__link {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform 0.6s var(--ease-out), box-shadow 0.6s var(--ease-out);
+    @include focus-ring;
+    &:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  .nc__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--bg-2);
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 1.2s var(--ease-out);
+    }
+    .nc__link:hover & img {
+      transform: scale(1.07);
+    }
+  }
+  .nc__ph {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 70% 30%, var(--sun-500), transparent 30%), linear-gradient(135deg, var(--teal-700), var(--teal-900));
+  }
+  .nc__tag {
+    position: absolute;
+    top: 14px;
+    inset-inline-start: 14px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: rgba(0, 38, 43, 0.75);
+    backdrop-filter: blur(8px);
+    color: #fff;
+  }
+  .nc__tag--royal {
+    background: var(--sun-500);
+  }
+  .nc__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 22px 24px;
+    time {
+      font-size: 0.8rem;
+      color: var(--text-2);
+      font-weight: 600;
+    }
+    h3 {
+      font-size: 1.14rem;
+      line-height: 1.3;
+      @include clamp-lines(3);
+    }
+    p {
+      color: var(--text-2);
+      font-size: 0.95rem;
+      @include clamp-lines(3);
+    }
+  }
+  .nc__more {
+    margin-top: auto;
+    padding-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--sun-600);
+    svg {
+      transition: transform 0.4s var(--ease-out);
+    }
+    .nc__link:hover & svg {
+      transform: translateX(4px);
+    }
+    :global([dir='rtl']) & svg {
+      transform: scaleX(-1);
+    }
+  }
+  .nc--big {
+    .nc__body h3 {
+      font-size: clamp(1.3rem, 2vw, 1.8rem);
+    }
+    .nc__media {
+      aspect-ratio: 16 / 9;
+    }
+  }
+</style>

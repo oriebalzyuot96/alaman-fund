@@ -1,0 +1,83 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { data, ui, type Lang } from '../lib/i18n';
+import { crumbs } from '../lib/crumbs';
+
+interface Props { lang: Lang; slug: string }
+const { lang, slug } = Astro.props;
+const t = ui[lang];
+const page = data[lang].pages[slug];
+const flat = page.sections.flat();
+const heading = flat.find((b) => b.t === 'h2')?.text;
+const reports = flat
+  .map((b, i) => (b.t === 'img' ? { cover: b.src!, title: flat[i + 1]?.text, pdf: flat.slice(i + 1, i + 4).find((x) => x.t === 'a')?.href } : null))
+  .filter((r) => r && r.pdf) as { cover: string; title: string; pdf: string }[];
+---
+<Base lang={lang} title={page.title}>
+  <PageHero lang={lang} title={page.title} kicker={lang === 'ar' ? 'الشفافية' : 'Transparency'} lead={heading} crumbs={crumbs(lang, slug)} />
+  <section class="section rp">
+    <div class="container rp__grid">
+      {reports.reverse().map((r, i) => (
+        <a class="rp__book" href={r.pdf} target="_blank" rel="noopener" data-reveal style={`--d:${i}`}>
+          <div class="rp__cover">
+            <img src={r.cover} alt="" loading="lazy" />
+            <span class="rp__spine" aria-hidden="true"></span>
+          </div>
+          <div class="rp__meta">
+            <h2>{r.title}</h2>
+            <span class="link-arrow">{t.view} ↗</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style lang="scss">
+  @use '../styles/mixins' as *;
+
+  .rp__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: clamp(30px, 4vw, 60px);
+  }
+  .rp__book {
+    display: grid;
+    gap: 22px;
+    perspective: 1200px;
+  }
+  .rp__cover {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 6px 16px 16px 6px;
+    overflow: hidden;
+    transform-origin: left center;
+    transform: rotateY(-14deg);
+    box-shadow: 18px 24px 40px -18px rgba(0, 38, 43, 0.55), inset 0 0 0 1px var(--line);
+    transition: transform 0.9s var(--ease-out), box-shadow 0.9s var(--ease-out);
+    background: var(--bg-2);
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .rp__book:hover & {
+      transform: rotateY(-2deg) translateY(-8px);
+      box-shadow: 30px 40px 60px -24px rgba(0, 38, 43, 0.55);
+    }
+  }
+  .rp__spine {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 14px;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.15), transparent);
+  }
+  .rp__meta {
+    display: grid;
+    gap: 6px;
+    h2 {
+      font-size: 1.6rem;
+    }
+  }
+</style>

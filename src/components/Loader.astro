@@ -1,0 +1,211 @@
+---
+import { ui, type Lang } from '../lib/i18n';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+---
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader__panel loader__panel--a"></div>
+  <div class="loader__panel loader__panel--b"></div>
+  <div class="loader__stage">
+    <svg class="loader__mark" viewBox="0 0 200 200" fill="none">
+      <defs>
+        <radialGradient id="ld-sun" cx="40%" cy="35%" r="70%">
+          <stop offset="0" stop-color="#ffc78f" />
+          <stop offset="0.55" stop-color="#f68d2e" />
+          <stop offset="1" stop-color="#e0731a" />
+        </radialGradient>
+        <clipPath id="ld-horizon"><rect x="0" y="0" width="200" height="132" /></clipPath>
+      </defs>
+      <circle class="loader__halo" cx="104" cy="88" r="70" />
+      <g clip-path="url(#ld-horizon)">
+        <circle class="loader__sun" cx="104" cy="88" r="52" fill="url(#ld-sun)" />
+      </g>
+      <!-- the ribbon "path" from the Al Aman mark -->
+      <path class="loader__ribbon" d="M22 54 L68 40 C64 92 76 118 104 126 C132 134 150 122 178 128 L176 150 C150 142 126 156 96 150 C58 142 36 108 22 54 Z" />
+      <path class="loader__trace" pathLength="1" d="M22 54 L68 40 C64 92 76 118 104 126 C132 134 150 122 178 128" />
+    </svg>
+    <div class="loader__meta">
+      <span class="loader__label">{t.loading}</span>
+      <span class="loader__count"><span id="loader-num">0</span>%</span>
+    </div>
+    <div class="loader__bar"><span id="loader-bar"></span></div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var root = document.documentElement;
+    var el = document.getElementById('loader');
+    if (!el) return;
+    var seen = false;
+    try { seen = sessionStorage.getItem('aman-loaded') === '1'; } catch (e) {}
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var minTime = seen || reduce ? 350 : 2100;
+    var start = performance.now();
+    var target = 0, shown = 0, done = false;
+    var num = document.getElementById('loader-num');
+    var bar = document.getElementById('loader-bar');
+    document.body.classList.add('is-loading');
+    root.classList.add('loader-on');
+    if (seen) el.classList.add('is-quick');
+
+    // Real readiness signals: fonts, window load, and the 3D scene (if the page has one).
+    var signals = { fonts: false, load: false, scene: !document.querySelector('[data-needs-scene]') };
+    function bump() {
+      var ready = (signals.fonts ? 30 : 0) + (signals.load ? 45 : 0) + (signals.scene ? 25 : 0);
+      target = Math.max(target, ready);
+    }
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { signals.fonts = true; bump(); });
+    if (document.readyState === 'complete') { signals.load = true; bump(); }
+    else addEventListener('load', function () { signals.load = true; bump(); });
+    addEventListener('scene:ready', function () { signals.scene = true; bump(); });
+    // Never hold the visitor hostage: cap the wait.
+    setTimeout(function () { signals.fonts = signals.load = signals.scene = true; bump(); }, 6000);
+
+    function tick(now) {
+      var elapsed = now - start;
+      var timeCap = Math.min(100, (elapsed / minTime) * 100);
+      var goal = Math.min(target, timeCap);
+      shown += (goal - shown) * 0.09;
+      if (goal - shown < 0.4) shown = goal;
+      var v = Math.round(shown);
+      num.textContent = v;
+      bar.style.transform = 'scaleX(' + shown / 100 + ')';
+      el.style.setProperty('--p', shown / 100);
+      if (v >= 100 && !done) return finish();
+      requestAnimationFrame(tick);
+    }
+    function finish() {
+      done = true;
+      try { sessionStorage.setItem('aman-loaded', '1'); } catch (e) {}
+      el.classList.add('is-done');
+      setTimeout(function () {
+        document.body.classList.remove('is-loading');
+        root.classList.remove('loader-on');
+        window.__amanLoaded = true;
+        dispatchEvent(new Event('loader:done'));
+      }, seen ? 150 : 450);
+      setTimeout(function () { el.remove(); }, 1600);
+    }
+    requestAnimationFrame(tick);
+    // rAF is paused in background tabs; a timer guarantees the page is never left behind the loader.
+    setTimeout(function () { if (!done) finish(); }, 7000);
+  })();
+</script>
+
+<style lang="scss">
+  .loader {
+    --p: 0;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    pointer-events: all;
+  }
+  .loader__panel {
+    position: absolute;
+    inset-inline: 0;
+    height: 50.5%;
+    background: radial-gradient(120% 90% at 50% 100%, #004f59 0%, #00353c 45%, #00262b 100%);
+    transition: transform 1.1s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  .loader__panel--a {
+    top: 0;
+  }
+  .loader__panel--b {
+    bottom: 0;
+    background: radial-gradient(120% 90% at 50% 0%, #004f59 0%, #00353c 45%, #00262b 100%);
+  }
+  .loader__stage {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 22px;
+    transition: opacity 0.5s, transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  .loader__mark {
+    width: clamp(120px, 18vw, 170px);
+    overflow: visible;
+  }
+  .loader__halo {
+    fill: #f68d2e;
+    opacity: calc(var(--p) * 0.22);
+    filter: blur(18px);
+    transform-origin: 104px 88px;
+    transform: scale(calc(0.6 + var(--p) * 0.6));
+  }
+  .loader__sun {
+    transform: translateY(calc((1 - var(--p)) * 90px));
+  }
+  .loader__ribbon {
+    fill: #0b6570;
+    opacity: calc(var(--p) * 1.4 - 0.3);
+  }
+  .loader__trace {
+    stroke: #ffbe7d;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - var(--p) * 1.6);
+    opacity: calc(1.2 - var(--p));
+  }
+  .loader__meta {
+    display: flex;
+    gap: 18px;
+    align-items: baseline;
+    font: 500 0.8rem/1 var(--font-body);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  :global([dir='rtl']) .loader__meta {
+    letter-spacing: 0;
+    font-size: 0.95rem;
+  }
+  .loader__count {
+    font: 400 1.6rem/1 var(--font-display);
+    letter-spacing: 0;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.2ch;
+    text-align: end;
+  }
+  .loader__bar {
+    width: min(240px, 60vw);
+    height: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #ffbe7d, #f68d2e);
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+  }
+  :global([dir='rtl']) .loader__bar span {
+    transform-origin: right;
+  }
+  .loader.is-quick .loader__stage {
+    opacity: 0;
+  }
+  .loader.is-done {
+    pointer-events: none;
+    .loader__stage {
+      opacity: 0;
+      transform: scale(0.92) translateY(-12px);
+    }
+    .loader__panel--a {
+      transform: translateY(-101%);
+      transition-delay: 0.25s;
+    }
+    .loader__panel--b {
+      transform: translateY(101%);
+      transition-delay: 0.25s;
+    }
+  }
+</style>
