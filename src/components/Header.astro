@@ -538,6 +538,19 @@ const promo = {
   .hdr__lang span {
     font-size: 0.85rem;
   }
+  @include down(480px) {
+    .hdr__lang,
+    .hdr__sep {
+      display: none !important;
+    }
+    .hdr__bar {
+      padding-inline: 14px 8px;
+      gap: 8px;
+    }
+    .hdr__logo img {
+      height: 38px;
+    }
+  }
   .hdr__cta {
     flex: none;
     margin-inline-start: 6px;

@@ -5,14 +5,14 @@ const { lang, title, kicker, lead, image, crumbs = [] } = Astro.props;
 const t = ui[lang];
 const words = title.split(' ');
 ---
-<section class="ph">
+<section class:list={['ph', { 'ph--photo': image }]}>
   <div class="ph__bg" aria-hidden="true">
     {image && <img src={image} alt="" />}
     <svg class="ph__ribbon" viewBox="0 0 1440 400" preserveAspectRatio="none">
       <path d="M0 300 C 300 200, 520 380, 820 290 S 1260 180, 1440 250 L1440 400 L0 400 Z" />
       <path class="ph__line" d="M0 270 C 300 170, 520 350, 820 260 S 1260 150, 1440 220" />
     </svg>
-    <div class="ph__sun"></div>
+    {!image && <div class="ph__sun"></div>}
   </div>
   <div class="container ph__in">
     <nav class="ph__crumbs" aria-label="Breadcrumb">
@@ -160,6 +160,22 @@ const words = title.split(' ');
   }
   .ph__lead {
     color: rgba(255, 255, 255, 0.78);
+  }
+  .ph--photo .ph__bg {
+    img {
+      opacity: 1;
+      mix-blend-mode: normal;
+      object-position: center 35%;
+    }
+    &::after {
+      background: linear-gradient(90deg, rgba(0, 38, 43, 0.92) 0%, rgba(0, 38, 43, 0.6) 45%, rgba(0, 38, 43, 0.15) 80%), linear-gradient(rgba(0, 38, 43, 0.5), transparent 30%);
+    }
+    :global([dir='rtl']) &::after {
+      background: linear-gradient(-90deg, rgba(0, 38, 43, 0.92) 0%, rgba(0, 38, 43, 0.6) 45%, rgba(0, 38, 43, 0.15) 80%), linear-gradient(rgba(0, 38, 43, 0.5), transparent 30%);
+    }
+  }
+  .ph--photo {
+    min-height: clamp(480px, 68vh, 700px);
   }
   // hold the intro until the loader lifts
   :global(html.loader-on) .ph :is(.ph__w > span, .ph__sun, .ph__line, img) {

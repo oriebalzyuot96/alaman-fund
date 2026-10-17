@@ -210,7 +210,7 @@ function Ready() {
   return null;
 }
 
-export default function HeroScene({ rtl = false }: { rtl?: boolean }) {
+export default function HeroScene({ rtl = false, sun = true }: { rtl?: boolean; sun?: boolean }) {
   const intro = useRef(0);
   const wrap = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
@@ -256,7 +256,7 @@ export default function HeroScene({ rtl = false }: { rtl?: boolean }) {
       >
         <Ready />
         <Rig intro={intro} rtl={rtl} />
-        <Sun intro={intro} rtl={rtl} />
+        {sun && <Sun intro={intro} rtl={rtl} />}
         <Ribbon color="#004f59" color2="#0b6570" offset={0} y={-1.35} z={0.4} width={1.6} speed={0.35} opacity={0.96} />
         <Ribbon color="#2f8a92" color2="#004f59" offset={2.1} y={-1.9} z={-0.6} width={1.1} speed={0.28} opacity={0.55} />
         <Ribbon color="#f68d2e" color2="#ffbe7d" offset={4.2} y={-2.35} z={1.1} width={0.12} speed={0.42} opacity={0.85} />

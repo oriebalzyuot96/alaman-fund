@@ -53,6 +53,15 @@ const award = excellence.find((b) => b.t === 'h2' && excellence.indexOf(b) > 0);
 const awardText = excellence.find((b) => b.t === 'p')?.text;
 const num = (v: string) => parseInt(v.replace(/[^\d]/g, ''));
 const statIcons: IconName[] = ['clock', 'users', 'heart', 'cap', 'briefcase', 'book', 'growth'];
+const statPhotos = [
+  '/media/2026/05/the-order-of-al-istiqlal.jpeg',
+  '/media/2026/05/5000-beneficiaries-covered-.jpg',
+  '/media/2026/05/female-.jpg-scaled.jpeg',
+  '/media/2026/04/IMG_3982.jpeg',
+  '/media/2026/05/Job-Placements-1.jpg',
+  '/media/2026/05/active_students__optimized_1500.jpg-scaled.jpeg',
+  '/media/2026/05/TRAINED-STUDENTS-OPTION-2-.jpg-scaled.jpeg',
+].map((p) => withBase(p));
 
 const film = {
   kicker: lang === 'ar' ? 'فيلم ثلاثي الأبعاد' : 'A 3D short film',
@@ -89,7 +98,8 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
 <Base lang={lang} title={t.orgName} scene>
   <!-- HERO -->
   <section class="hero">
-    <div class="hero__canvas" aria-hidden="true"><HeroScene client:only="react" rtl={lang === "ar"} /></div>
+    <div class="hero__photo" aria-hidden="true"><img src={withBase('/media/2026/04/4-1-1.jpg')} alt="" fetchpriority="high" /></div>
+    <div class="hero__canvas" aria-hidden="true"><HeroScene client:only="react" rtl={lang === "ar"} sun={false} /></div>
     <div class="hero__veil" aria-hidden="true"></div>
     <div class="container hero__in">
       <p class="kicker hero__kicker" data-intro style="--d:0">{t.heroKicker}</p>
@@ -98,7 +108,7 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
         <span class="hero__line"><span data-intro style="--d:2">{t.heroTitleB}</span></span>
         <span class="hero__line hero__line--sun"><span data-intro style="--d:3"><em>{t.heroTitleC}</em></span></span>
       </h1>
-      <p class="lead hero__lead" data-intro style="--d:4">{intro}</p>
+      <p class="hero__lead" data-intro style="--d:4">{intro}</p>
       <div class="hero__ctas" data-intro style="--d:5">
         <a class="btn" href={href(lang, 'ways-to-give/donate')}><Icon name="heart" size={18} /> {t.donate}</a>
         <a class="btn btn--ghost" href={href(lang, 'application-portal')}><Icon name="cap" size={18} /> {t.apply}</a>
@@ -152,13 +162,13 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
           const n = num(s.value);
           return (
             <div class:list={['bento__it', `bento__it--${i}`]} data-reveal data-tilt style={`--d:${i % 4}`}>
+              <img class="bento__photo" src={statPhotos[i]} alt="" loading="lazy" />
               <span class="bento__icon"><Icon name={statIcons[i]} size={20} /></span>
               {s.value.includes('%') && (
                 <svg class="bento__ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" /><circle class="bento__ringFill" cx="22" cy="22" r="18" pathLength="100" style={`--p:${num(s.value)}`} /></svg>
               )}
               <strong>{isNaN(n) ? s.value : <><span data-count={n}>0</span>{s.value.includes('%') ? '%' : ''}</>}</strong>
               <span>{s.text}</span>
-              {i === 1 && <div class="bento__orb" aria-hidden="true"></div>}
             </div>
           );
         })}
@@ -216,11 +226,17 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
         <a class="link-arrow" href={href(lang, 'news')} data-reveal>{t.allNews} <Icon name="arrow" size={16} /></a>
       </div>
 
+      <figure class="royal__banner" data-reveal="clip">
+        <img src={withBase('/media/2026/04/hmq.jpg')} alt={lang === 'ar' ? 'جلالة الملكة رانيا العبدالله مع شباب صندوق الأمان' : 'Her Majesty Queen Rania Al Abdullah with Al Aman Fund youth'} loading="lazy" />
+        <figcaption>
+          <span class="royal__badge"><Icon name="award" size={16} /> {lang === 'ar' ? 'مبادرة ملكية منذ 2006' : 'Royal initiative since 2006'}</span>
+        </figcaption>
+      </figure>
+
       <div class="royal__grid">
         <aside class="royal__portrait" data-reveal>
           <figure>
             <img src={withBase('/media/2026/02/Her-Majesty-Queen-Rania-Al-Abdullah-600x750.jpg')} alt={lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'} loading="lazy" />
-            <span class="royal__badge"><Icon name="award" size={16} /> {lang === 'ar' ? 'مبادرة ملكية منذ 2006' : 'Royal initiative since 2006'}</span>
           </figure>
           <div class="royal__who">
             <strong>{lang === 'ar' ? 'جلالة الملكة رانيا العبدالله' : 'Her Majesty Queen Rania Al Abdullah'}</strong>
@@ -456,19 +472,43 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
     overflow: hidden;
     isolation: isolate;
   }
+  .hero__photo {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 60% 30%;
+      transform: scale(1.08);
+      animation: hero-zoom 18s var(--ease-out) forwards;
+    }
+  }
+  @keyframes hero-zoom {
+    to {
+      transform: scale(1);
+    }
+  }
+  :global(html.loader-on) .hero__photo img {
+    animation-play-state: paused;
+  }
   .hero__canvas {
     position: absolute;
     inset: 0;
     z-index: -2;
+    opacity: 0.85;
+    mix-blend-mode: screen;
   }
   .hero__veil {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(90deg, rgba(0, 38, 43, 0.85) 0%, rgba(0, 38, 43, 0.35) 45%, transparent 70%), linear-gradient(transparent 70%, $teal-950);
+    background: linear-gradient(90deg, rgba(0, 38, 43, 0.9) 0%, rgba(0, 38, 43, 0.55) 42%, rgba(0, 38, 43, 0.1) 75%), linear-gradient(rgba(0, 38, 43, 0.55), transparent 22%, transparent 62%, $teal-950);
     pointer-events: none;
     :global([dir='rtl']) & {
-      background: linear-gradient(-90deg, rgba(0, 38, 43, 0.85) 0%, rgba(0, 38, 43, 0.35) 45%, transparent 70%), linear-gradient(transparent 70%, $teal-950);
+      background: linear-gradient(-90deg, rgba(0, 38, 43, 0.9) 0%, rgba(0, 38, 43, 0.55) 42%, rgba(0, 38, 43, 0.1) 75%), linear-gradient(rgba(0, 38, 43, 0.55), transparent 22%, transparent 62%, $teal-950);
     }
     @include down($bp-md) {
       background: linear-gradient(rgba(0, 38, 43, 0.2), rgba(0, 38, 43, 0.75) 60%, $teal-950);
@@ -514,9 +554,17 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
       font-style: normal;
     }
   }
+  // the original site's teal intro box
   .hero__lead {
-    color: rgba(255, 255, 255, 0.8);
-    max-width: 48ch;
+    max-width: 52ch;
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    background: rgba(0, 79, 89, 0.82);
+    backdrop-filter: blur(10px);
+    border-inline-start: 3px solid $sun-500;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: clamp(1rem, 1.3vw, 1.15rem);
+    line-height: 1.6;
   }
   .hero__ctas {
     display: flex;
@@ -750,6 +798,41 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
       grid-column: auto;
     }
   }
+  .bento__it {
+    padding-top: 78px;
+  }
+  .bento__photo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.34;
+    filter: saturate(0.85);
+    transition: opacity 0.6s, transform 1.2s var(--ease-out);
+    .bento__it:hover & {
+      opacity: 0.5;
+      transform: scale(1.05);
+    }
+  }
+  .bento__it::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(180deg, rgba(0, 38, 43, 0.15), rgba(0, 38, 43, 0.85));
+    pointer-events: none;
+  }
+  .bento__it > :not(.bento__photo) {
+    position: relative;
+    z-index: 1;
+  }
+  .bento__it > .bento__icon,
+  .bento__it > .bento__ring,
+  .bento__it > .bento__orb {
+    position: absolute;
+  }
   .bento__it--1 {
     grid-column: span 2;
     grid-row: span 2;
@@ -963,6 +1046,38 @@ const tracks = D.pages['application-portal'].sections.flat().filter((b) => b.t =
   }
 
   // ROYAL PATRONAGE
+  .royal__banner {
+    position: relative;
+    margin: 0 0 clamp(20px, 3vw, 36px);
+    aspect-ratio: 21 / 8;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+    box-shadow: var(--shadow-lift);
+    @include down($bp-md) {
+      aspect-ratio: 4 / 3;
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent 55%, rgba(0, 38, 43, 0.7));
+    }
+    figcaption {
+      position: absolute;
+      z-index: 1;
+      inset-inline-start: 24px;
+      bottom: 22px;
+    }
+    .royal__badge {
+      position: static;
+    }
+  }
   .royal__grid {
     display: grid;
     grid-template-columns: 0.8fr 2fr;
